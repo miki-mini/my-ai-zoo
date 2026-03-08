@@ -1,6 +1,18 @@
 {
-  "appId": "com.example.app",
-  "appName": "My Bot App",
-  "webDir": "static",
-  "bundledWebRuntime": false
+  "appId": "com.miki.botapp",
+  "appName": "BERNARD BEACON",
+  "webDir": "static/bb",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true,
+    "loggingBehavior": "debug"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 500,
+      "backgroundColor": "#121212",
+      "showSpinner": false
+    }
+  }
 }

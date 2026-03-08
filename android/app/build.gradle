@@ -40,6 +40,20 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+
+    // ── NanoHTTPD — Embedded HTTP Server (Captive Portal) ───────────
+    // SOURCE: https://github.com/NanoHttpd/nanohttpd
+    // "NanoHTTPD is a light-weight HTTP server designed for embedding in
+    // other applications." — Provides the SOSHttpServer that serves the
+    // rescue page to connected Wi-Fi hotspot devices.
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
+
+    // ── Google Play Services Location ───────────────────────────────
+    // SOURCE: https://developers.google.com/android/reference/com/google/android/gms/location/FusedLocationProviderClient
+    // "The fused location provider manages the underlying location technology
+    // and provides a simple API, conserving battery power." — Handles GPS,
+    // Wi-Fi, and cell tower triangulation automatically.
+    implementation 'com.google.android.gms:play-services-location:21.3.0'
 }
 
 apply from: 'capacitor.build.gradle'

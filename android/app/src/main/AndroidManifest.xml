@@ -7,7 +7,15 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        android:usesCleartextTraffic="true">
+        <!--
+            android:usesCleartextTraffic="true"
+            SOURCE: https://developer.android.com/training/articles/security-config
+            Required because the local captive portal HTTP server communicates
+            over http:// (not https://) on the private hotspot LAN.
+            This does NOT affect external internet traffic security.
+        -->
 
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
@@ -31,11 +39,47 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"></meta-data>
+                android:resource="@xml/file_paths" />
         </provider>
     </application>
 
-    <!-- Permissions -->
-
+    <!-- ── Network ──────────────────────────────────────────────── -->
+    <!--
+        SOURCE: https://developer.android.com/reference/android/Manifest.permission#INTERNET
+        "Allows applications to open network sockets." — Required for the
+        NanoHTTPD HTTP server to bind to port 8080 and accept connections
+        from devices on the Wi-Fi hotspot network.
+    -->
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+        SOURCE: https://developer.android.com/reference/android/Manifest.permission#ACCESS_WIFI_STATE
+        "Allows applications to access information about Wi-Fi networks."
+        Used to read the current device IP address for display in the UI.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
+    <!-- ── Location (GPS) ───────────────────────────────────────── -->
+    <!--
+        SOURCE: https://developer.android.com/training/location/permissions
+        "ACCESS_FINE_LOCATION: Allows app to get a precise location using GPS."
+        Required for FusedLocationProviderClient.getCurrentLocation() with
+        PRIORITY_HIGH_ACCURACY to embed exact GPS coordinates into the SSID
+        and captive portal SOS page — critical for pinpointing buried survivors.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- ── Foreground Service (keeps server alive when app backgrounded) -->
+    <!--
+        SOURCE: https://developer.android.com/guide/components/foreground-services
+        "Foreground services perform operations that are noticeable to the user.
+        Each foreground service must show a status bar notification." — Used to
+        prevent Android from killing the NanoHTTPD server process when the
+        user's screen turns off in an emergency situation.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
 </manifest>
