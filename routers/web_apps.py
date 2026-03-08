@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter
 from fastapi.responses import HTMLResponse
 
@@ -11,6 +10,15 @@ async def index():
         with open("static/index.html", "r", encoding="utf-8") as f:
             html_content = f.read()
         return HTMLResponse(content=html_content, headers={"Cache-Control": "no-cache, no-store, must-revalidate"})
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Page Not Found</h1>", status_code=404)
+
+@router.get("/bb", response_class=HTMLResponse)
+async def bb_page():
+    """BERNARD BEACON (BB) のWebアプリ"""
+    try:
+        with open("static/bb/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
     except FileNotFoundError:
         return HTMLResponse(content="<h1>Page Not Found</h1>", status_code=404)
 
@@ -148,8 +156,6 @@ async def fish_page():
             return HTMLResponse(content=f.read(), headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
     except FileNotFoundError:
         return HTMLResponse(content="<h1>Page Not Found</h1>", status_code=404)
-
-
 
 @router.get("/wolf", response_class=HTMLResponse)
 async def wolf_page():
