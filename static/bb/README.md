@@ -1,6 +1,6 @@
 # 🐕 BERNARD BEACON
 
-![alt text](output.webp)
+![alt text](BB.webp)
 
 > **Digital Smoke Signal for Disaster Scenarios**
 > セルネットワーク完全不通時のオフラインSOSシステム
