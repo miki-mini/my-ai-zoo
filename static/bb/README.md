@@ -3,7 +3,9 @@
 ![alt text](BB.webp)
 
 > **Digital Smoke Signal for Disaster Scenarios**
-> セルネットワーク完全不通時のオフラインSOSシステム
+> セルネットワーク完全不通時のオフラインSOSシステム / Offline SOS system for complete cellular network outages
+
+[English Documentation is available below.](#english-documentation)
 
 ---
 
@@ -295,3 +297,54 @@ MIT License
 ---
 
 *BERNARD BEACON — Built with ❤️ for survival*
+
+---
+---
+
+# English Documentation
+
+## Concept
+
+This app is designed for disaster scenarios (like massive earthquakes) where cell towers collapse and internet access is completely lost. **It works anywhere in the world** because it relies on standard Wi-Fi tethering and Captive Portal technology built into every smartphone.
+
+**The Genius Loophole:** Rescuers *do not* need to have the app installed.
+When people open their Wi-Fi settings looking for a connection, they will spot an abnormal SSID like `!_SOS_35.681_139.767_R302`. Simply seeing this communicates your exact GPS location. If they connect to it, a captive portal automatically launches on their phone, displaying your detailed SOS information.
+
+```text
+Victim's Phone              Rescuer's Phone
+┌─────────────────┐        ┌──────────────────┐
+│ BERNARD BEACON  │  WiFi  │  Wi-Fi Settings  │
+│ [DEPLOY BEACON] │ ────→  │ !_SOS_35.6_139.7 │
+│                 │        │ ← Upon connect...│
+│ 🐕 Sending...   │        │ ⚡SOS page pops up│
+└─────────────────┘        └──────────────────┘
+```
+
+## Features
+
+### STEP 1 — SOS Profile Setup
+Information to enter and save during normal times (stored in `localStorage`).
+- Name
+- Location Details (Address/Building Name)
+- In-Building Position (Floor/Room number)
+- Medical Info (Blood type, allergies, medications)
+- Emergency Contacts
+- Current Condition
+
+### STEP 2 — GPS Acquisition & SSID Generation
+- Uses `navigator.geolocation` / Android's `FusedLocationProviderClient` to get high-accuracy coordinates (lat/lng/accuracy), even offline.
+- Generates a Wi-Fi SSID within the 32-byte (UTF-8) IEEE 802.11 limit.
+- Puts `!_` at the beginning so the SSID floats to the very top of Wi-Fi scan lists.
+- Example: `!_SOS_35.681_139.767_R302`
+
+### STEP 3 — Deploy Beacon
+- **A. Captive Portal HTTP Server:** Runs a NanoHTTPD server on port 8080. It intercepts captive portal probes from Android/iOS/Windows and returns a `302 Redirect`, tricking the rescuer's OS into showing a "Sign in to network" pop-up that displays your SOS web page.
+- **B. Hotspot Settings Intent:** Due to Android 10+ privacy restrictions on Apps modifying SSIDs, the app automatically copies the SSID to your clipboard and opens the native Android Hotspot Settings. You just paste it in and turn the hotspot ON.
+- **C. Battery Pulse Mode:** Tethering eats battery quickly (~400mA). Pulse Mode (e.g. 1 min ON / 5 mins OFF) extends your battery life by up to 2.5x, giving you enough juice to survive overnight while still being statistically likely to be found during rescuer sweeps.
+
+## Origin of the Name
+
+**St. Bernard** — The historic rescue dog from the Swiss Alps.
+**Beacon** — A signal fire or lighthouse indicating location.
+
+> *"A digital smoke signal" — Even when the network is completely dead, we call for help over the airwaves using just Wi-Fi.*
