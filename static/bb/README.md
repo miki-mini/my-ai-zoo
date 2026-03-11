@@ -289,7 +289,14 @@ cd android && ./gradlew assembleDebug
 > *「デジタルの煙信号」— ネットワークが完全に死んでも、Wi-Fiという電波だけで救助を呼ぶ。*
 
 ---
+## 🎥 Video Demonstration
 
+
+https://github.com/user-attachments/assets/1c98794f-615b-437f-9310-7e0e5ecb4d72
+
+
+
+---
 ## ライセンス
 
 MIT License
