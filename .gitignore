@@ -16,6 +16,9 @@ include/
 __pycache__/
 *.pyc
 
+# .gitignoreの中身
+.coverage
+
 # --- VS Codeの設定 ---
 .vscode/
 
