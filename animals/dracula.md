@@ -17,12 +17,12 @@
 
 | ランク | 称号 | 必要pts | 説明 |
 |:------:|:-----|:-------:|:-----|
-| <img src="../static/dracula.images/Just a Sugar Glider.png" width="60"> | **Just a Sugar Glider**<br>ただのフクロモモンガ | 0〜9 | 人語を話せない。日光で即座に消滅する。 |
-| <img src="../static/dracula.images/Baby Dracula.png" width="60"> | **Baby Dracula**<br>赤ちゃんドラキュラ | 10〜24 | 牙が生え始めている。「日焼け止め」ミルクが必要。 |
-| <img src="../static/dracula.images/Dark Knight.png" width="60"> | **Dark Knight**<br>闇の騎士 | 25〜39 | 中級者。物理的盾（パラソル）の扱いに慣れてきた。 |
-| <img src="../static/dracula.images/Vampire Aristocrat.png" width="60"> | **Vampire Aristocrat**<br>吸血貴族 / エリート | 40〜49 | ニンニクの罠を避け、優雅にトマトジュースを嗜む。 |
-| <img src="../static/dracula.images/Dracula King.png" width="60"> | **Dracula King 🫅**<br>ドラキュラ王 | 50〜99 | 夜の支配者。もはや外出の必要すらない。 |
-| <img src="../static/dracula.images/Ancient  True Ancestor.png" width="60"> | **Ancient / True Ancestor**<br>真祖 | 100〜 | 歴史的伝説。太陽の方が彼を避けるようになった。 |
+| <img src="../static/dracula.images/Just%20a%20Sugar%20Glider.png" width="60"> | **Just a Sugar Glider**<br>ただのフクロモモンガ | 0〜9 | 人語を話せない。日光で即座に消滅する。 |
+| <img src="../static/dracula.images/Baby%20Dracula.png" width="60"> | **Baby Dracula**<br>赤ちゃんドラキュラ | 10〜24 | 牙が生え始めている。「日焼け止め」ミルクが必要。 |
+| <img src="../static/dracula.images/Dark%20Knight.png" width="60"> | **Dark Knight**<br>闇の騎士 | 25〜39 | 中級者。物理的盾（パラソル）の扱いに慣れてきた。 |
+| <img src="../static/dracula.images/Vampire%20Aristocrat.png" width="60"> | **Vampire Aristocrat**<br>吸血貴族 / エリート | 40〜49 | ニンニクの罠を避け、優雅にトマトジュースを嗜む。 |
+| <img src="../static/dracula.images/Dracula%20King.png" width="60"> | **Dracula King 🫅**<br>ドラキュラ王 | 50〜99 | 夜の支配者。もはや外出の必要すらない。 |
+| <img src="../static/dracula.images/Ancient%20%20True%20Ancestor.png" width="60"> | **Ancient / True Ancestor**<br>真祖 | 100〜 | 歴史的伝説。太陽の方が彼を避けるようになった。 |
 
 ---
 
