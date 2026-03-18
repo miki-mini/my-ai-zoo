@@ -37,7 +37,7 @@ from animals.beaver import register_beaver_handler
 from animals.bat import register_bat_handler
 from animals.owl import register_owl_handler
 
-from routers import web_apps, butsubutsu, lesser_panda
+from routers import web_apps, butsubutsu, lesser_panda, lord_f as lord_f_router
 from animals import beaver, fox, bat, mole, frog, capybara, penguin, owl, raccoon, retriever
 from core.rate_limiter import check_and_increment_by_ip
 
@@ -67,6 +67,7 @@ app.include_router(owl.router)
 app.include_router(raccoon.router)
 app.include_router(retriever.router)
 app.include_router(lesser_panda.router)
+app.include_router(lord_f_router.router)
 db = None
 storage_client = None
 text_model = None

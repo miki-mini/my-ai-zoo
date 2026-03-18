@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sunlit Sanctuary — The Lord F Experience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
+  <style>
+    /* ================================================================
+       DESIGN SYSTEM — Noble CEO's Chamber
+       Palette: Deep Sapphire × Imperial Purple × Warm Sunlit Gold
+    ================================================================ */
+    :root {
+      --bg-void:        #060811;
+      --bg-deep:        #0A0D1A;
+      --bg-card:        #0E1225;
+      --bg-input:       #131828;
+      --border:         #1E2B4A;
+      --border-glow:    #2A3D6B;
+      --sapphire:       #1A56DB;
+      --sapphire-mid:   #2563EB;
+      --sapphire-light: #60A5FA;
+      --purple:         #7C3AED;
+      --purple-light:   #A78BFA;
+      --gold:           #D97706;
+      --gold-mid:       #F59E0B;
+      --gold-light:     #FCD34D;
+      --red:            #EF4444;
+      --red-light:      #FCA5A5;
+      --white:          #F8FAFC;
+      --silver:         #94A3B8;
+      --muted:          #475569;
+      --dim:            #334155;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
+
+    body {
+      min-height: 100%;
+      background-color: var(--bg-void);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      /* Warm sunlit ambient — like afternoon light through tall chamber windows */
+      background-image:
+        radial-gradient(ellipse 90% 35% at 50% -5%,  rgba(217,119,6,0.11) 0%, transparent 60%),
+        radial-gradient(ellipse 55% 35% at 85% 85%,  rgba(26,86,219,0.07) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 30% at 10% 70%,  rgba(124,58,237,0.05) 0%, transparent 50%);
+    }
+
+    /* ── Layout ── */
+    .sanctuary { max-width: 680px; margin: 0 auto; padding: 0 16px 120px; }
+
+    /* ── Header ── */
+    .header {
+      padding: 36px 0 24px;
+      text-align: center;
+      position: relative;
+    }
+    .header::after {
+      content: '';
+      display: block;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--sapphire) 70%, transparent 100%);
+      margin-top: 24px;
+      opacity: 0.35;
+    }
+    .header-kana {
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      color: var(--gold-mid);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .header-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(26px, 5.5vw, 40px);
+      font-weight: 700;
+      color: var(--white);
+      text-shadow: 0 0 50px rgba(217,119,6,0.25);
+      line-height: 1.15;
+    }
+    .header-subtitle {
+      font-size: 12px;
+      color: var(--silver);
+      letter-spacing: 0.12em;
+      margin-top: 8px;
+    }
+    .header-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Level Badge ── */
+    .level-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid;
+      transition: all 0.4s ease;
+      cursor: default;
+    }
+    .level-badge.lv-0 { background: rgba(71,85,105,0.15); border-color: var(--dim);     color: var(--silver); }
+    .level-badge.lv-1 { background: rgba(26,86,219,0.15);  border-color: var(--sapphire); color: var(--sapphire-light); }
+    .level-badge.lv-2 { background: rgba(124,58,237,0.15); border-color: var(--purple);   color: var(--purple-light); }
+    .level-badge.lv-3 {
+      background: rgba(217,119,6,0.15);
+      border-color: var(--gold);
+      color: var(--gold-light);
+      box-shadow: 0 0 16px rgba(217,119,6,0.15);
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 7px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid;
+      transition: all 0.2s ease;
+      font-family: inherit;
+      letter-spacing: 0.04em;
+    }
+    .btn-scan {
+      background: rgba(217,119,6,0.08);
+      border-color: rgba(217,119,6,0.35);
+      color: var(--gold-mid);
+    }
+    .btn-scan:hover {
+      background: rgba(217,119,6,0.18);
+      border-color: var(--gold-mid);
+      box-shadow: 0 0 14px rgba(217,119,6,0.18);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--sapphire) 0%, var(--purple) 100%);
+      border-color: transparent;
+      color: var(--white);
+      padding: 12px 28px;
+      font-size: 13px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .btn-primary:hover:not(:disabled) {
+      opacity: 0.88;
+      box-shadow: 0 4px 22px rgba(26,86,219,0.4);
+      transform: translateY(-1px);
+    }
+    .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-ghost {
+      background: transparent;
+      border-color: var(--dim);
+      color: var(--muted);
+    }
+    .btn-ghost:hover { border-color: var(--silver); color: var(--silver); }
+
+    /* ── Stats Bar ── */
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      padding: 12px 0;
+      font-size: 12px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+    .stat-value { color: var(--silver); font-weight: 600; }
+
+    /* ── Lord F Welcome Banner ── */
+    .lord-f-banner {
+      margin: 20px 0;
+      padding: 20px 22px;
+      background: linear-gradient(135deg, rgba(217,119,6,0.05) 0%, rgba(26,86,219,0.05) 100%);
+      border: 1px solid rgba(217,119,6,0.18);
+      border-radius: 16px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+    .lord-f-avatar-lg {
+      flex-shrink: 0;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--sapphire) 0%, var(--purple) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 22px rgba(26,86,219,0.3), 0 0 40px rgba(217,119,6,0.08);
+      position: relative;
+    }
+    .lord-f-avatar-lg::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold), var(--sapphire), var(--purple));
+      z-index: -1;
+      opacity: 0.7;
+    }
+    .lord-f-name-row {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold-mid);
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .lord-f-name-row .badge-ceo {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 400;
+    }
+    .lord-f-welcome-text {
+      font-size: 14px;
+      color: var(--silver);
+      font-style: italic;
+      line-height: 1.75;
+    }
+
+    /* ── Timeline ── */
+    .timeline { display: flex; flex-direction: column; gap: 16px; margin: 24px 0; }
+    .timeline-empty {
+      text-align: center;
+      padding: 56px 24px;
+      color: var(--muted);
+      font-style: italic;
+      font-size: 14px;
+      line-height: 2;
+    }
+
+    /* ── Post Card ── */
+    .post-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      transition: border-color 0.3s ease;
+      animation: slideUp 0.35s ease both;
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .post-card:hover { border-color: var(--border-glow); }
+
+    .post-header {
+      padding: 16px 20px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      background: var(--dim);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .post-author { font-size: 13px; font-weight: 600; color: var(--white); }
+    .post-time   { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .post-body {
+      padding: 4px 20px 16px;
+      font-size: 15px;
+      color: var(--silver);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.7;
+    }
+
+    /* ── Reply Section ── */
+    .reply-section {
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      background: linear-gradient(180deg, rgba(217,119,6,0.025) 0%, transparent 100%);
+    }
+    .reply-section.tsundere {
+      background: linear-gradient(180deg, rgba(239,68,68,0.05) 0%, transparent 100%);
+      border-top-color: rgba(239,68,68,0.18);
+    }
+    .reply-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .reply-avatar {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, var(--sapphire) 0%, var(--purple) 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+    .reply-name { font-size: 12px; font-weight: 600; color: var(--gold-mid); }
+    .tsundere-badge {
+      font-size: 10px;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: var(--red-light);
+      padding: 2px 9px;
+      border-radius: 999px;
+      letter-spacing: 0.04em;
+    }
+    .reply-text {
+      font-size: 14px;
+      color: var(--white);
+      line-height: 1.75;
+      font-style: italic;
+      white-space: pre-wrap;
+    }
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 14px;
+      background: var(--gold-mid);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    /* Thinking dots */
+    .thinking { display: flex; gap: 5px; align-items: center; padding: 4px 0; }
+    .thinking span {
+      width: 7px; height: 7px;
+      background: var(--gold-mid);
+      border-radius: 50%;
+      animation: dotPulse 1.4s ease-in-out infinite;
+    }
+    .thinking span:nth-child(2) { animation-delay: 0.2s; }
+    .thinking span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotPulse {
+      0%,80%,100% { transform: scale(0.5); opacity: 0.25; }
+      40%          { transform: scale(1);   opacity: 1; }
+    }
+
+    /* ── Compose (Sticky footer) ── */
+    .compose {
+      position: sticky;
+      bottom: 0;
+      background: linear-gradient(180deg, transparent 0%, var(--bg-void) 18%);
+      padding: 12px 0 24px;
+    }
+    .compose-inner {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 -8px 40px rgba(0,0,0,0.5);
+    }
+    .compose-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .compose-textarea {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--white);
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 12px 14px;
+      resize: none;
+      min-height: 80px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .compose-textarea:focus  { border-color: var(--sapphire); }
+    .compose-textarea::placeholder { color: var(--muted); font-style: italic; }
+    .compose-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+    .compose-hint { font-size: 11px; color: var(--dim); }
+
+    /* ── Skeleton loader ── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-input) 50%, var(--bg-card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 8px;
+    }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── Introvert Scan Modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(6,8,17,0.87);
+      backdrop-filter: blur(10px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-glow);
+      border-radius: 20px;
+      padding: 32px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.65), 0 0 70px rgba(217,119,6,0.06);
+      transform: scale(0.94);
+      transition: transform 0.3s ease;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--white);
+      margin-bottom: 8px;
+    }
+    .modal-subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.65;
+      margin-bottom: 24px;
+    }
+
+    /* Scan question box */
+    .scan-question-box {
+      background: var(--bg-input);
+      border: 1px solid rgba(217,119,6,0.4);
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .scan-q-label {
+      font-size: 10px;
+      color: var(--gold-mid);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .scan-q-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      color: var(--white);
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .scan-timer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--silver);
+      transition: color 0.5s ease;
+    }
+    .scan-timer.t1 { color: var(--sapphire-light); }
+    .scan-timer.t2 { color: var(--purple-light); }
+    .scan-timer.t3 { color: var(--gold-light); text-shadow: 0 0 12px rgba(217,119,6,0.4); }
+
+    /* Scan result */
+    .scan-result {
+      display: none;
+      padding: 18px;
+      background: rgba(217,119,6,0.05);
+      border: 1px solid rgba(217,119,6,0.2);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+    .scan-result.visible { display: block; }
+    .scan-result-level {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gold-mid);
+      margin-bottom: 8px;
+      letter-spacing: 0.04em;
+    }
+    .scan-result-msg {
+      font-size: 14px;
+      color: var(--white);
+      font-style: italic;
+      line-height: 1.7;
+    }
+
+    .scan-input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--white);
+      font-family: inherit;
+      font-size: 14px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      margin-bottom: 16px;
+    }
+    .scan-input:focus { border-color: var(--gold); }
+    .scan-footer { display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      .header-title { font-size: 22px; }
+      .modal { padding: 22px; }
+      .btn-primary { padding: 11px 18px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     INTROVERT SCAN MODAL
+═══════════════════════════════════ -->
+<div id="scanModal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-title">⚡ Introvert Power Scan</div>
+    <p class="modal-subtitle">
+      Lord F will measure your introverting power. A question will appear below.
+      Do <em>not</em> force an instant reply — your authentic freeze time is precisely what matters.
+    </p>
+
+    <div class="scan-question-box">
+      <div class="scan-q-label">— Lord F inquires —</div>
+      <div class="scan-q-text" id="scanQuestion">What is your favorite food?</div>
+      <div id="scanTimer" class="scan-timer">0.0s</div>
+    </div>
+
+    <div id="scanResult" class="scan-result">
+      <div class="scan-result-level" id="scanResultLevel"></div>
+      <div class="scan-result-msg"   id="scanResultMsg"></div>
+    </div>
+
+    <input
+      type="text"
+      id="scanInput"
+      class="scan-input"
+      placeholder="Type your answer here..."
+      autocomplete="off"
+    />
+    <div class="scan-footer">
+      <button class="btn btn-ghost" onclick="closeScan()">Cancel</button>
+      <button class="btn btn-scan" id="scanSubmitBtn" onclick="submitScan()">Submit to Lord F →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════
+     MAIN APP
+═══════════════════════════════════ -->
+<div class="sanctuary">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-kana">✦ サンクチュアリ — Zero Human Followers ✦</div>
+    <h1 class="header-title">Sunlit Sanctuary</h1>
+    <p class="header-subtitle">The Lord F Experience — A Single-Player SNS for Introverted Developers</p>
+    <div class="header-controls">
+      <div id="levelBadge" class="level-badge lv-0">
+        <span id="levelIcon">✦</span>
+        <span id="levelText">Unclassified — Run Scan</span>
+      </div>
+      <button class="btn btn-scan" onclick="openScan()">⚡ Introvert Scan</button>
+    </div>
+  </header>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar">
+    <span>📜 Posts: <span class="stat-value" id="postCountStat">—</span></span>
+    <span>🐱 Lord F is watching</span>
+    <span style="margin-left: auto; font-size: 11px;">Ctrl+Enter to post</span>
+  </div>
+
+  <!-- Lord F Welcome Banner -->
+  <div class="lord-f-banner">
+    <div class="lord-f-avatar-lg" id="lordFAvatarLg">😼</div>
+    <div>
+      <div class="lord-f-name-row">
+        <span>Lord F</span>
+        <span>👑</span>
+        <span class="badge-ceo">— CEO, Sunlit Sanctuary</span>
+      </div>
+      <div class="lord-f-welcome-text">
+        Ho ho ho... you've arrived. Good. This sanctuary exists for one purpose:
+        to give you — the developer I have personally selected — a space free from
+        the noise of lesser timelines. Post your thoughts. Your code. Your complaints.
+        I shall respond with exactly the precision your situation demands.
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div id="timeline" class="timeline">
+    <div class="timeline-empty">
+      Your sanctuary awaits your first post...<br>
+      <span style="font-size: 12px; color: var(--dim);">Lord F is prepared.</span>
+    </div>
+  </div>
+
+  <!-- Compose (Sticky) -->
+  <div class="compose">
+    <div class="compose-inner">
+      <div class="compose-label">Post to the Sanctuary</div>
+      <textarea
+        id="composeInput"
+        class="compose-textarea"
+        placeholder="What dwells in your thoughts today? Code, frustrations, victories — Lord F receives all."
+        maxlength="2000"
+        onkeydown="handleComposeKey(event)"
+      ></textarea>
+      <div class="compose-footer">
+        <span class="compose-hint" id="charCount">0 / 2000</span>
+        <button class="btn btn-primary" id="postBtn" onclick="submitPost()">
+          Broadcast to Sanctuary →
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /sanctuary -->
+
+
+<script>
+// ================================================================
+// SUNLIT SANCTUARY — Client Logic
+// The Lord F Experience
+// ================================================================
+
+// ─────────────────────────────────────
+// STATE
+// Why: A single mutable object prevents scattered globals and makes
+//      state transitions easy to reason about.
+// ─────────────────────────────────────
+const STATE = {
+  userId:        null,
+  introvertLevel: 0,
+  introvertLabel: 'Unclassified',
+  postCount:      0,
+  isPosting:      false,
+  scan: {
+    questionShownAt:  null,  // ms timestamp when question appeared
+    firstKeystrokeAt: null,  // ms timestamp of user's first keypress
+    intervalId:       null,
+    keyHandler:       null,  // ref for cleanup
+  }
+};
+
+// ─────────────────────────────────────
+// USER ID
+// Doc: https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID
+// Why: crypto.randomUUID() is browser-native, cryptographically secure,
+//      requires no library — perfect for anonymous single-user sessions.
+// ─────────────────────────────────────
+function getUserId() {
+  // Doc: https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
+  // Why: localStorage persists across sessions without a server-side auth system
+  let id = localStorage.getItem('lord_f_user_id');
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem('lord_f_user_id', id);
+  }
+  return id;
+}
+
+// ─────────────────────────────────────
+// INIT
+// ─────────────────────────────────────
+async function init() {
+  STATE.userId = getUserId();
+  // Doc: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
+  // Why: Promise.all runs independent async tasks in parallel — profile + timeline load simultaneously
+  await Promise.all([loadProfile(), loadTimeline()]);
+
+  // Character counter
+  const ta = document.getElementById('composeInput');
+  ta.addEventListener('input', () => {
+    document.getElementById('charCount').textContent = `${ta.value.length} / 2000`;
+  });
+}
+
+// ─────────────────────────────────────
+// PROFILE
+// Doc: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
+// Why: fetch() is the browser-native HTTP client — no extra dependencies needed
+// ─────────────────────────────────────
+async function loadProfile() {
+  try {
+    const res  = await fetch(`/api/lord-f/profile?user_id=${STATE.userId}`);
+    const data = await res.json();
+    if (data.success) {
+      STATE.introvertLevel = data.introvert_level || 0;
+      STATE.introvertLabel = data.introvert_label || levelLabel(STATE.introvertLevel);
+      STATE.postCount      = data.post_count || 0;
+      renderLevelBadge();
+      document.getElementById('postCountStat').textContent = STATE.postCount;
+    }
+  } catch (e) { console.warn('[LordF] Profile load failed:', e); }
+}
+
+function levelLabel(n) {
+  return {0:'Unclassified', 1:'Social Camouflager', 2:'Deep Submerger', 3:'Cosmic Drifter'}[n] || 'Unclassified';
+}
+
+function renderLevelBadge() {
+  const badge = document.getElementById('levelBadge');
+  const icon  = document.getElementById('levelIcon');
+  const text  = document.getElementById('levelText');
+  const icons = {0:'✦', 1:'🔵', 2:'💜', 3:'⭐'};
+
+  badge.className = `level-badge lv-${STATE.introvertLevel}`;
+  icon.textContent = icons[STATE.introvertLevel] || '✦';
+  text.textContent = STATE.introvertLevel === 0
+    ? 'Unclassified — Run Scan'
+    : `Level ${STATE.introvertLevel} — ${STATE.introvertLabel}`;
+}
+
+// ─────────────────────────────────────
+// TIMELINE
+// ─────────────────────────────────────
+async function loadTimeline() {
+  const tl = document.getElementById('timeline');
+  // Show skeleton while loading
+  tl.innerHTML = `
+    <div class="post-card" style="padding:20px;">
+      <div class="skeleton" style="height:13px;width:28%;margin-bottom:14px;"></div>
+      <div class="skeleton" style="height:56px;margin-bottom:10px;"></div>
+      <div class="skeleton" style="height:40px;"></div>
+    </div>`;
+  try {
+    const res  = await fetch(`/api/lord-f/timeline?user_id=${STATE.userId}&limit=30`);
+    const data = await res.json();
+    if (!data.success || data.posts.length === 0) {
+      tl.innerHTML = `<div class="timeline-empty">Your sanctuary awaits your first post...<br><span style="font-size:12px;color:var(--dim)">Lord F is prepared.</span></div>`;
+      return;
+    }
+    // Doc: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
+    // Why: .map() declaratively transforms data to HTML — avoids imperative DOM loops
+    tl.innerHTML = data.posts.map(p => buildCard(p)).join('');
+  } catch (e) {
+    tl.innerHTML = `<div class="timeline-empty">Connectivity disrupted.<br><span style="font-size:12px;color:var(--dim)">Lord F is irritated.</span></div>`;
+  }
+}
+
+// ─────────────────────────────────────
+// CARD BUILDER
+// Why: Template literals produce clean, readable HTML for complex multi-element structures
+// ─────────────────────────────────────
+function buildCard(post) {
+  const ago      = timeAgo(post.timestamp);
+  const tsundere = !!post.tsundere;
+  const replyHtml = post.lord_f_reply ? `
+    <div class="reply-section ${tsundere ? 'tsundere' : ''}">
+      <div class="reply-header">
+        <div class="reply-avatar">${tsundere ? '😾' : '😼'}</div>
+        <div class="reply-name">Lord F</div>
+        ${tsundere ? '<span class="tsundere-badge">⚡ TSUNDERE MODE</span>' : ''}
+      </div>
+      <div class="reply-text">${esc(post.lord_f_reply)}</div>
+    </div>` : '';
+
+  return `
+    <div class="post-card">
+      <div class="post-header">
+        <div class="user-avatar">👤</div>
+        <div>
+          <div class="post-author">You</div>
+          <div class="post-time">${ago}</div>
+        </div>
+      </div>
+      <div class="post-body">${esc(post.content)}</div>
+      ${replyHtml}
+    </div>`;
+}
+
+// ─────────────────────────────────────
+// POST SUBMISSION
+// Doc: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+// Why: POST with JSON body + Content-Type header is the correct REST pattern for resource creation
+// ─────────────────────────────────────
+async function submitPost() {
+  if (STATE.isPosting) return;
+  const input   = document.getElementById('composeInput');
+  const content = input.value.trim();
+  if (!content) return;
+
+  STATE.isPosting = true;
+  const btn = document.getElementById('postBtn');
+  btn.disabled = true;
+  btn.textContent = 'Transmitting...';
+
+  // Optimistically prepend the card to timeline
+  const tl      = document.getElementById('timeline');
+  const emptyEl = tl.querySelector('.timeline-empty');
+  if (emptyEl) emptyEl.remove();
+
+  const cardEl = document.createElement('div');
+  cardEl.innerHTML = buildCard({ content, timestamp: new Date().toISOString(), lord_f_reply: null });
+  const card = cardEl.firstElementChild;
+  tl.insertBefore(card, tl.firstChild);
+  input.value = '';
+  document.getElementById('charCount').textContent = '0 / 2000';
+
+  // Add Lord F thinking indicator
+  const thinkEl = document.createElement('div');
+  thinkEl.className = 'reply-section';
+  thinkEl.innerHTML = `
+    <div class="reply-header">
+      <div class="reply-avatar">😼</div>
+      <div class="reply-name">Lord F</div>
+    </div>
+    <div class="thinking"><span></span><span></span><span></span></div>`;
+  card.appendChild(thinkEl);
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  try {
+    const res  = await fetch('/api/lord-f/post', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      // Doc: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
+      // Why: JSON.stringify serializes the request body to the wire format the API expects
+      body: JSON.stringify({ content, user_id: STATE.userId, introvert_level: STATE.introvertLevel }),
+    });
+    const data = await res.json();
+
+    card.removeChild(thinkEl);
+
+    const replySection = document.createElement('div');
+    replySection.className = `reply-section ${data.tsundere ? 'tsundere' : ''}`;
+    replySection.innerHTML = `
+      <div class="reply-header">
+        <div class="reply-avatar">${data.tsundere ? '😾' : '😼'}</div>
+        <div class="reply-name">Lord F</div>
+        ${data.tsundere ? '<span class="tsundere-badge">⚡ TSUNDERE MODE</span>' : ''}
+      </div>
+      <div class="reply-text" id="replyTarget"></div>`;
+    card.appendChild(replySection);
+
+    // Typewriter animation for Lord F's reply
+    await typewriter(document.getElementById('replyTarget'), data.reply || '...');
+
+    STATE.postCount++;
+    document.getElementById('postCountStat').textContent = STATE.postCount;
+
+  } catch (e) {
+    card.removeChild(thinkEl);
+    const errEl = document.createElement('div');
+    errEl.className = 'reply-section';
+    errEl.innerHTML = `<div class="reply-text">Ho ho ho... the ether is disrupted. How irritating. Try again.</div>`;
+    card.appendChild(errEl);
+  }
+
+  STATE.isPosting = false;
+  btn.disabled    = false;
+  btn.textContent = 'Broadcast to Sanctuary →';
+}
+
+// ─────────────────────────────────────
+// TYPEWRITER ANIMATION
+// Doc: https://developer.mozilla.org/en-US/docs/Web/API/setTimeout
+// Why: Recursive setTimeout (vs setInterval) avoids timer drift and allows
+//      variable per-character delays — giving Lord F a deliberate, authoritative cadence
+// ─────────────────────────────────────
+function typewriter(el, text, charDelay = 16) {
+  return new Promise(resolve => {
+    let i = 0;
+    el.textContent = '';
+    const cursor = Object.assign(document.createElement('span'), { className: 'cursor' });
+    el.appendChild(cursor);
+
+    function tick() {
+      if (i < text.length) {
+        el.insertBefore(document.createTextNode(text[i]), cursor);
+        i++;
+        // Longer pause after sentence-ending punctuation — Lord F's deliberate cadence
+        const delay = '.?!,;:'.includes(text[i - 1]) ? charDelay * 5 : charDelay;
+        setTimeout(tick, delay);
+      } else {
+        setTimeout(() => { cursor.remove(); resolve(); }, 900);
+      }
+    }
+    tick();
+  });
+}
+
+// Ctrl+Enter to post
+function handleComposeKey(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    submitPost();
+  }
+}
+
+// ─────────────────────────────────────
+// INTROVERT SCAN
+// ─────────────────────────────────────
+const QUESTIONS = [
+  "What is your favorite food?",
+  "What do you do when you have free time?",
+  "What sound do you find most soothing?",
+  "What was the last thing you searched online?",
+  "What is your ideal weekend?",
+  "Describe your perfect workspace.",
+];
+
+function openScan() {
+  const modal = document.getElementById('scanModal');
+  const input = document.getElementById('scanInput');
+  const result = document.getElementById('scanResult');
+  const timer  = document.getElementById('scanTimer');
+  const qEl    = document.getElementById('scanQuestion');
+  const submitBtn = document.getElementById('scanSubmitBtn');
+
+  // Reset
+  input.value = '';
+  result.classList.remove('visible');
+  timer.textContent = '0.0s';
+  timer.className   = 'scan-timer';
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Submit to Lord F →';
+  submitBtn.onclick = submitScan;
+
+  // Random question
+  qEl.textContent = QUESTIONS[Math.floor(Math.random() * QUESTIONS.length)];
+
+  STATE.scan.questionShownAt  = Date.now();
+  STATE.scan.firstKeystrokeAt = null;
+  modal.classList.add('open');
+
+  // Timer display
+  // Doc: https://developer.mozilla.org/en-US/docs/Web/API/setInterval
+  // Why: 100ms interval gives 0.1s display precision without burning CPU
+  STATE.scan.intervalId = setInterval(() => {
+    if (!STATE.scan.questionShownAt) return;
+    const secs = (Date.now() - STATE.scan.questionShownAt) / 1000;
+    timer.className = 'scan-timer ' + (secs < 3 ? 't1' : secs < 10 ? 't2' : 't3');
+    timer.textContent = secs.toFixed(1) + 's';
+  }, 100);
+
+  // Capture first keystroke — record exactly once
+  // Doc: https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#once
+  // Why: { once: true } auto-removes the listener after first fire — no manual cleanup needed
+  if (STATE.scan.keyHandler) {
+    input.removeEventListener('keydown', STATE.scan.keyHandler);
+  }
+  STATE.scan.keyHandler = () => {
+    if (!STATE.scan.firstKeystrokeAt) STATE.scan.firstKeystrokeAt = Date.now();
+  };
+  input.addEventListener('keydown', STATE.scan.keyHandler);
+
+  setTimeout(() => input.focus(), 300);
+}
+
+function closeScan() {
+  clearInterval(STATE.scan.intervalId);
+  const input = document.getElementById('scanInput');
+  if (STATE.scan.keyHandler) {
+    input.removeEventListener('keydown', STATE.scan.keyHandler);
+    STATE.scan.keyHandler = null;
+  }
+  document.getElementById('scanModal').classList.remove('open');
+}
+
+async function submitScan() {
+  const question  = document.getElementById('scanQuestion').textContent;
+  const submitBtn = document.getElementById('scanSubmitBtn');
+
+  // If user never typed, use current time
+  if (!STATE.scan.firstKeystrokeAt) STATE.scan.firstKeystrokeAt = Date.now();
+  clearInterval(STATE.scan.intervalId);
+
+  const responseTime = (STATE.scan.firstKeystrokeAt - STATE.scan.questionShownAt) / 1000;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Lord F is analyzing...';
+
+  try {
+    const res  = await fetch('/api/lord-f/introvert-update', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: STATE.userId, response_time_seconds: responseTime, question }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      STATE.introvertLevel = data.introvert_level;
+      STATE.introvertLabel = data.label;
+      renderLevelBadge();
+
+      document.getElementById('scanResultLevel').textContent =
+        `Level ${data.introvert_level}: ${data.label}  (${responseTime.toFixed(1)}s)`;
+      document.getElementById('scanResultMsg').textContent = data.lord_f_message;
+      document.getElementById('scanResult').classList.add('visible');
+
+      // Update welcome avatar based on level
+      const avatars = {1: '😼', 2: '😸', 3: '🙀'};
+      document.getElementById('lordFAvatarLg').textContent = avatars[data.introvert_level] || '😼';
+    }
+  } catch (e) {
+    console.error('[LordF] Scan submit failed:', e);
+  }
+
+  submitBtn.textContent = 'Close';
+  submitBtn.disabled    = false;
+  submitBtn.onclick     = closeScan;
+}
+
+// Close when clicking backdrop
+document.getElementById('scanModal').addEventListener('click', function(e) {
+  if (e.target === this) closeScan();
+});
+
+// ─────────────────────────────────────
+// UTILITIES
+// ─────────────────────────────────────
+
+// Relative time formatting
+// Doc: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/RelativeTimeFormat
+// Why: Intl.RelativeTimeFormat produces locale-aware relative times with no external library
+function timeAgo(iso) {
+  if (!iso) return 'just now';
+  try {
+    const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+    if (diff < 60)    return 'just now';
+    if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+  } catch { return ''; }
+}
+
+// XSS prevention via text node escaping
+// Doc: https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML#security_considerations
+// Why: Creating a text node and reading innerHTML escapes all HTML entities,
+//      preventing XSS without a sanitizer library
+function esc(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(str || ''));
+  return d.innerHTML;
+}
+
+// ─────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

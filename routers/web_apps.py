@@ -165,3 +165,12 @@ async def wolf_page():
             return HTMLResponse(content=f.read(), headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
     except FileNotFoundError:
         return HTMLResponse(content="<h1>Page Not Found</h1>", status_code=404)
+
+@router.get("/lord-f", response_class=HTMLResponse)
+async def lord_f_page():
+    """🐱 Sunlit Sanctuary — The Lord F Experience（内向型開発者向け一人用SNS）"""
+    try:
+        with open("static/lord_f.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read(), headers={"Cache-Control": "no-store, no-cache, must-revalidate, max-age=0"})
+    except FileNotFoundError:
+        return HTMLResponse(content="<h1>Page Not Found</h1>", status_code=404)
