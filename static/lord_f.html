@@ -178,7 +178,7 @@
     }
     .stat-value { color: var(--silver); font-weight: 600; }
 
-    /* ── Lord F Welcome Banner ── */
+    /* ── CEO シャム猫 Welcome Banner ── */
     .lord-f-banner {
       margin: 20px 0;
       padding: 20px 22px;
@@ -547,12 +547,12 @@
   <div class="modal">
     <div class="modal-title">⚡ 陰キャ戦闘力スキャン</div>
     <p class="modal-subtitle">
-      Lord Fがあなたの「陰キャ度（内省力）」を測定します。下に質問が表示されます。<br>
+      CEO シャム猫があなたの「陰キャ度（内省力）」を測定します。下に質問が表示されます。<br>
       <em>無理に即答しないでください</em> — あなたのリアルな「フリーズ時間」こそが重要なのです。
     </p>
 
     <div class="scan-question-box">
-      <div class="scan-q-label">— Lord F からの質問 —</div>
+      <div class="scan-q-label">— CEO シャム猫 からの質問 —</div>
       <div class="scan-q-text" id="scanQuestion">好きな食べ物はなんですか？</div>
       <div id="scanTimer" class="scan-timer">0.0s</div>
     </div>
@@ -571,7 +571,7 @@
     />
     <div class="scan-footer">
       <button class="btn btn-ghost" onclick="closeScan()">キャンセル</button>
-      <button class="btn btn-scan" id="scanSubmitBtn" onclick="submitScan()">Lord F に提出 決定 →</button>
+      <button class="btn btn-scan" id="scanSubmitBtn" onclick="submitScan()">CEO シャム猫 に提出 決定 →</button>
     </div>
   </div>
 </div>
@@ -584,7 +584,7 @@
 
   <!-- Header -->
   <header class="header">
-    <img src="images/lord_f.png" alt="Lord F Top Image" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; box-shadow: 0 0 30px rgba(217,119,6,0.25); border: 2px solid rgba(217,119,6,0.4);" />
+    <img src="images/lord_f.png" alt="CEO シャム猫 Top Image" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; box-shadow: 0 0 30px rgba(217,119,6,0.25); border: 2px solid rgba(217,119,6,0.4);" />
     <div class="header-kana">✦ 日だまりのサンクチュアリ — 人間ゼロの1人用SNS ✦</div>
     <h1 class="header-title">Sunlit Sanctuary</h1>
     <p class="header-subtitle">高貴なCEOシャム猫が労う、陰キャなエンジニア専用の1人用SNS</p>
@@ -600,16 +600,16 @@
   <!-- Stats Bar -->
   <div class="stats-bar">
     <span>📜 投稿数: <span class="stat-value" id="postCountStat">—</span></span>
-    <span>🐱 Lord F があなたを見守っています</span>
+    <span>🐱 CEO シャム猫 があなたを見守っています</span>
     <span style="margin-left: auto; font-size: 11px;">Ctrl+Enter で投稿</span>
   </div>
 
-  <!-- Lord F Welcome Banner -->
+  <!-- CEO シャム猫 Welcome Banner -->
   <div class="lord-f-banner">
     <div class="lord-f-avatar-lg" id="lordFAvatarLg" style="background-image: url('images/aicon.png'); font-size: 0;"></div>
     <div>
       <div class="lord-f-name-row">
-        <span>Lord F</span>
+        <span>CEO シャム猫</span>
         <span>👑</span>
         <span class="badge-ceo">— CEO, 日だまりのサンクチュアリ</span>
       </div>
@@ -626,7 +626,7 @@
   <div id="timeline" class="timeline">
     <div class="timeline-empty">
       サンクチュアリはあなたの最初の投稿を待っています...<br>
-      <span style="font-size: 12px; color: var(--dim);">Lord F は準備万端です。</span>
+      <span style="font-size: 12px; color: var(--dim);">CEO シャム猫 は準備万端です。</span>
     </div>
   </div>
 
@@ -637,7 +637,7 @@
       <textarea
         id="composeInput"
         class="compose-textarea"
-        placeholder="今日はどんな考えが浮かんでいますか？ コード、悩み、小さな勝利……すべて Lord F が受け止めます。"
+        placeholder="今日はどんな考えが浮かんでいますか？ コード、悩み、小さな勝利……すべて CEO シャム猫 が受け止めます。"
         maxlength="2000"
         onkeydown="handleComposeKey(event)"
       ></textarea>
@@ -656,7 +656,7 @@
 <script>
 // ================================================================
 // SUNLIT SANCTUARY — Client Logic
-// The Lord F Experience
+// The CEO シャム猫 Experience
 // ================================================================
 
 // ─────────────────────────────────────
@@ -763,14 +763,14 @@ async function loadTimeline() {
     const res  = await fetch(`/api/lord-f/timeline?user_id=${STATE.userId}&limit=30`);
     const data = await res.json();
     if (!data.success || data.posts.length === 0) {
-      tl.innerHTML = `<div class="timeline-empty">サンクチュアリはあなたの最初の投稿を待っています...<br><span style="font-size:12px;color:var(--dim)">Lord F は準備万端です。</span></div>`;
+      tl.innerHTML = `<div class="timeline-empty">サンクチュアリはあなたの最初の投稿を待っています...<br><span style="font-size:12px;color:var(--dim)">CEO シャム猫 は準備万端です。</span></div>`;
       return;
     }
     // Doc: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
     // Why: .map() declaratively transforms data to HTML — avoids imperative DOM loops
     tl.innerHTML = data.posts.map(p => buildCard(p)).join('');
   } catch (e) {
-    tl.innerHTML = `<div class="timeline-empty">通信が途絶えました。<br><span style="font-size:12px;color:var(--dim)">Lord F が苛立っています。</span></div>`;
+    tl.innerHTML = `<div class="timeline-empty">通信が途絶えました。<br><span style="font-size:12px;color:var(--dim)">CEO シャム猫 が苛立っています。</span></div>`;
   }
 }
 
@@ -785,7 +785,7 @@ function buildCard(post) {
     <div class="reply-section ${tsundere ? 'tsundere' : ''}">
       <div class="reply-header">
         <div class="reply-avatar" style="background-image: url('images/aicon.png'); font-size: 0;"></div>
-        <div class="reply-name">Lord F</div>
+        <div class="reply-name">CEO シャム猫</div>
         ${tsundere ? '<span class="tsundere-badge">⚡ TSUNDERE MODE</span>' : ''}
       </div>
       <div class="reply-text">${esc(post.lord_f_reply)}</div>
@@ -833,13 +833,13 @@ async function submitPost() {
   input.value = '';
   document.getElementById('charCount').textContent = '0 / 2000';
 
-  // Add Lord F thinking indicator
+  // Add CEO シャム猫 thinking indicator
   const thinkEl = document.createElement('div');
   thinkEl.className = 'reply-section';
   thinkEl.innerHTML = `
     <div class="reply-header">
       <div class="reply-avatar" style="background-image: url('images/aicon.png'); font-size: 0;"></div>
-      <div class="reply-name">Lord F</div>
+      <div class="reply-name">CEO シャム猫</div>
     </div>
     <div class="thinking"><span></span><span></span><span></span></div>`;
   card.appendChild(thinkEl);
@@ -862,13 +862,13 @@ async function submitPost() {
     replySection.innerHTML = `
       <div class="reply-header">
         <div class="reply-avatar" style="background-image: url('images/aicon.png'); font-size: 0;"></div>
-        <div class="reply-name">Lord F</div>
+        <div class="reply-name">CEO シャム猫</div>
         ${data.tsundere ? '<span class="tsundere-badge">⚡ TSUNDERE MODE</span>' : ''}
       </div>
       <div class="reply-text" id="replyTarget"></div>`;
     card.appendChild(replySection);
 
-    // Typewriter animation for Lord F's reply
+    // Typewriter animation for CEO シャム猫's reply
     await typewriter(document.getElementById('replyTarget'), data.reply || '...');
 
     STATE.postCount++;
@@ -891,7 +891,7 @@ async function submitPost() {
 // TYPEWRITER ANIMATION
 // Doc: https://developer.mozilla.org/en-US/docs/Web/API/setTimeout
 // Why: Recursive setTimeout (vs setInterval) avoids timer drift and allows
-//      variable per-character delays — giving Lord F a deliberate, authoritative cadence
+//      variable per-character delays — giving CEO シャム猫 a deliberate, authoritative cadence
 // ─────────────────────────────────────
 function typewriter(el, text, charDelay = 16) {
   return new Promise(resolve => {
@@ -904,7 +904,7 @@ function typewriter(el, text, charDelay = 16) {
       if (i < text.length) {
         el.insertBefore(document.createTextNode(text[i]), cursor);
         i++;
-        // Longer pause after sentence-ending punctuation — Lord F's deliberate cadence
+        // Longer pause after sentence-ending punctuation — CEO シャム猫's deliberate cadence
         const delay = '.?!,;:'.includes(text[i - 1]) ? charDelay * 5 : charDelay;
         setTimeout(tick, delay);
       } else {
@@ -949,7 +949,7 @@ function openScan() {
   timer.textContent = '0.0s';
   timer.className   = 'scan-timer';
   submitBtn.disabled = false;
-  submitBtn.textContent = 'Lord F に提出 決定 →';
+  submitBtn.textContent = 'CEO シャム猫 に提出 決定 →';
   submitBtn.onclick = submitScan;
 
   // Random question
@@ -1003,7 +1003,7 @@ async function submitScan() {
 
   const responseTime = (STATE.scan.firstKeystrokeAt - STATE.scan.questionShownAt) / 1000;
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Lord F が分析中...';
+  submitBtn.textContent = 'CEO シャム猫 が分析中...';
 
   try {
     const res  = await fetch('/api/lord-f/introvert-update', {
