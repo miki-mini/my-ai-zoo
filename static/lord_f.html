@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>日だまりのサンクチュアリ — 高貴なCEOシャム猫</title>
+  <link rel="icon" href="images/aicon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
   <style>
@@ -200,6 +201,8 @@
       font-size: 24px;
       box-shadow: 0 0 22px rgba(26,86,219,0.3), 0 0 40px rgba(217,119,6,0.08);
       position: relative;
+      background-size: cover;
+      background-position: center;
     }
     .lord-f-avatar-lg::before {
       content: '';
@@ -311,6 +314,8 @@
       justify-content: center;
       font-size: 13px;
       flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
     }
     .reply-name { font-size: 12px; font-weight: 600; color: var(--gold-mid); }
     .tsundere-badge {
@@ -579,6 +584,7 @@
 
   <!-- Header -->
   <header class="header">
+    <img src="images/lord_f.png" alt="Lord F Top Image" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 20px; box-shadow: 0 0 30px rgba(217,119,6,0.25); border: 2px solid rgba(217,119,6,0.4);" />
     <div class="header-kana">✦ 日だまりのサンクチュアリ — 人間ゼロの1人用SNS ✦</div>
     <h1 class="header-title">Sunlit Sanctuary</h1>
     <p class="header-subtitle">高貴なCEOシャム猫が労う、陰キャなエンジニア専用の1人用SNS</p>
@@ -600,7 +606,7 @@
 
   <!-- Lord F Welcome Banner -->
   <div class="lord-f-banner">
-    <div class="lord-f-avatar-lg" id="lordFAvatarLg">😼</div>
+    <div class="lord-f-avatar-lg" id="lordFAvatarLg" style="background-image: url('images/aicon.png'); font-size: 0;"></div>
     <div>
       <div class="lord-f-name-row">
         <span>Lord F</span>
@@ -778,7 +784,7 @@ function buildCard(post) {
   const replyHtml = post.lord_f_reply ? `
     <div class="reply-section ${tsundere ? 'tsundere' : ''}">
       <div class="reply-header">
-        <div class="reply-avatar">${tsundere ? '😾' : '😼'}</div>
+        <div class="reply-avatar" style="background-image: url('images/aicon.png'); font-size: 0;"></div>
         <div class="reply-name">Lord F</div>
         ${tsundere ? '<span class="tsundere-badge">⚡ TSUNDERE MODE</span>' : ''}
       </div>
@@ -832,7 +838,7 @@ async function submitPost() {
   thinkEl.className = 'reply-section';
   thinkEl.innerHTML = `
     <div class="reply-header">
-      <div class="reply-avatar">😼</div>
+      <div class="reply-avatar" style="background-image: url('images/aicon.png'); font-size: 0;"></div>
       <div class="reply-name">Lord F</div>
     </div>
     <div class="thinking"><span></span><span></span><span></span></div>`;
@@ -855,7 +861,7 @@ async function submitPost() {
     replySection.className = `reply-section ${data.tsundere ? 'tsundere' : ''}`;
     replySection.innerHTML = `
       <div class="reply-header">
-        <div class="reply-avatar">${data.tsundere ? '😾' : '😼'}</div>
+        <div class="reply-avatar" style="background-image: url('images/aicon.png'); font-size: 0;"></div>
         <div class="reply-name">Lord F</div>
         ${data.tsundere ? '<span class="tsundere-badge">⚡ TSUNDERE MODE</span>' : ''}
       </div>
@@ -1018,8 +1024,8 @@ async function submitScan() {
       document.getElementById('scanResult').classList.add('visible');
 
       // Update welcome avatar based on level
-      const avatars = {1: '😼', 2: '😸', 3: '🙀'};
-      document.getElementById('lordFAvatarLg').textContent = avatars[data.introvert_level] || '😼';
+      // The original emoji has been replaced with the background image
+      // document.getElementById('lordFAvatarLg').textContent = avatars[data.introvert_level] || '😼';
     }
   } catch (e) {
     console.error('[LordF] Scan submit failed:', e);
