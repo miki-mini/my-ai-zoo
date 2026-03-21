@@ -1,6 +1,6 @@
 # 🤖 My AI ZOO Portal (Animal Agents)
 
-![CI/CD](https://img.shields.io/github/actions/workflow/status/miki-mini/my-line-bots/ci.yml?label=CI%2FCD&logo=github)
+![CI/CD](https://img.shields.io/github/actions/workflow/status/miki-mini/my-ai-zoo/ci.yml?label=CI%2FCD&logo=github)
 ![Coverage](https://img.shields.io/badge/Coverage-80%25%2B-green?logo=pytest&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109%2B-009688?logo=fastapi&logoColor=white)
@@ -170,8 +170,8 @@ graph TD
 
 ```bash
 # リポジトリのクローン
-git clone https://github.com/miki-mini/my-line-bots.git
-cd my-line-bots
+git clone https://github.com/miki-mini/my-ai-zoo.git
+cd my-ai-zoo
 
 # 依存関係のインストール
 pip install -r requirements.txt

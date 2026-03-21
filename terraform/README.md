@@ -9,6 +9,56 @@
 詳しい解説はこちら：
 - [Terraform × GCP｜手動4時間を3分に短縮。個人開発を加速させる「永続的インフラ」の作り方🚀](https://zenn.dev/miki_mini/articles/091e7cef00c704)
 
+
+## 🗺️ システム構成図
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e1f5fe', 'edgeLabelBackground':'#ffffff', 'tertiaryColor': '#fff'}}}%%
+graph TD
+    %% 外部サービス
+    User[End User]
+    Line[LINE Platform]
+    AI[External AI API <br/> (OpenAI/Gemini)]
+    Dev[Developer]
+    GH[GitHub Repository]
+    GHA[GitHub Actions]
+
+    subgraph GCP[Google Cloud Project]
+        direction TB
+
+        %% インフラ管理
+        Backend[(GCS Backend <br/> (tfstate))]
+
+        %% 認証・セキュリティ
+        WIF[Workload Identity <br/> Federation]
+        IAM[IAM <br/> (最小権限)]
+        Secrets[[Secret Manager <br/> (API Keys)]]
+
+        %% アプリケーション基盤
+        Registry[(Artifact Registry <br/> (Docker Image))]
+        Run[Cloud Run <br/> (Python LINE Bot)]
+
+        %% インフラ構築の流れ
+        Dev -.->|1. terraform apply| Backend
+        Dev -.->|1. terraform apply| GCP
+
+    end
+
+    %% CI/CDの流れ
+    Dev -->|2. git push| GH
+    GH -->|3. trigger| GHA
+    GHA -->|4. 認証 (Keyless)| WIF
+    WIF -->|5. 短期クレデンシャル生成| IAM
+    GHA -->|6. Push Image| Registry
+    GHA -->|7. Deploy| Run
+
+    %% アプリケーションの流れ
+    User <-->|メッセージ| Line
+    Line <-->|Webhook| Run
+    Run -.->|8. Get Secrets| Secrets
+    Run <-->|9. AI解析| AI
+
+    
 ## 🎯 このTerraformで構築されるもの
 
 - ✅ **Artifact Registry**: Dockerイメージの保存
@@ -133,8 +183,7 @@ GitHub Actions（.github/workflows/deploy.yml）:
 
 Pull Requestを作成すると、Botが自動的に変更内容（Plan）をコメントしてくれます。
 
-<スクリーンショット 2026-01-25 160542.png>
-
+![alt text](160542.png)
 ## ⚠️ トラブルシューティング (重要)
 
 ### 1. "API not enabled" エラーが出る場合
