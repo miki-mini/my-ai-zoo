@@ -25,5 +25,5 @@ variable "repository_name" {
 variable "github_repository" {
   description = "The GitHub repository to allow access (format: owner/repo)"
   type        = string
-  default     = "miki-mini/my-line-bots"
+  default     = "miki-mini/my-ai-zoo"
 }
