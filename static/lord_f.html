@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sunlit Sanctuary — The Lord F Experience</title>
+  <title>日だまりのサンクチュアリ — 高貴なCEOシャム猫</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet" />
   <style>
@@ -540,15 +540,15 @@
 ═══════════════════════════════════ -->
 <div id="scanModal" class="modal-overlay" role="dialog" aria-modal="true">
   <div class="modal">
-    <div class="modal-title">⚡ Introvert Power Scan</div>
+    <div class="modal-title">⚡ 陰キャ戦闘力スキャン</div>
     <p class="modal-subtitle">
-      Lord F will measure your introverting power. A question will appear below.
-      Do <em>not</em> force an instant reply — your authentic freeze time is precisely what matters.
+      Lord Fがあなたの「陰キャ度（内省力）」を測定します。下に質問が表示されます。<br>
+      <em>無理に即答しないでください</em> — あなたのリアルな「フリーズ時間」こそが重要なのです。
     </p>
 
     <div class="scan-question-box">
-      <div class="scan-q-label">— Lord F inquires —</div>
-      <div class="scan-q-text" id="scanQuestion">What is your favorite food?</div>
+      <div class="scan-q-label">— Lord F からの質問 —</div>
+      <div class="scan-q-text" id="scanQuestion">好きな食べ物はなんですか？</div>
       <div id="scanTimer" class="scan-timer">0.0s</div>
     </div>
 
@@ -561,12 +561,12 @@
       type="text"
       id="scanInput"
       class="scan-input"
-      placeholder="Type your answer here..."
+      placeholder="ここに答えを入力..."
       autocomplete="off"
     />
     <div class="scan-footer">
-      <button class="btn btn-ghost" onclick="closeScan()">Cancel</button>
-      <button class="btn btn-scan" id="scanSubmitBtn" onclick="submitScan()">Submit to Lord F →</button>
+      <button class="btn btn-ghost" onclick="closeScan()">キャンセル</button>
+      <button class="btn btn-scan" id="scanSubmitBtn" onclick="submitScan()">Lord F に提出 決定 →</button>
     </div>
   </div>
 </div>
@@ -579,23 +579,23 @@
 
   <!-- Header -->
   <header class="header">
-    <div class="header-kana">✦ サンクチュアリ — Zero Human Followers ✦</div>
+    <div class="header-kana">✦ 日だまりのサンクチュアリ — 人間ゼロの1人用SNS ✦</div>
     <h1 class="header-title">Sunlit Sanctuary</h1>
-    <p class="header-subtitle">The Lord F Experience — A Single-Player SNS for Introverted Developers</p>
+    <p class="header-subtitle">高貴なCEOシャム猫が労う、陰キャなエンジニア専用の1人用SNS</p>
     <div class="header-controls">
       <div id="levelBadge" class="level-badge lv-0">
         <span id="levelIcon">✦</span>
-        <span id="levelText">Unclassified — Run Scan</span>
+        <span id="levelText">未測定 — スキャンを実行</span>
       </div>
-      <button class="btn btn-scan" onclick="openScan()">⚡ Introvert Scan</button>
+      <button class="btn btn-scan" onclick="openScan()">⚡ 陰キャ戦闘力スキャン</button>
     </div>
   </header>
 
   <!-- Stats Bar -->
   <div class="stats-bar">
-    <span>📜 Posts: <span class="stat-value" id="postCountStat">—</span></span>
-    <span>🐱 Lord F is watching</span>
-    <span style="margin-left: auto; font-size: 11px;">Ctrl+Enter to post</span>
+    <span>📜 投稿数: <span class="stat-value" id="postCountStat">—</span></span>
+    <span>🐱 Lord F があなたを見守っています</span>
+    <span style="margin-left: auto; font-size: 11px;">Ctrl+Enter で投稿</span>
   </div>
 
   <!-- Lord F Welcome Banner -->
@@ -605,13 +605,13 @@
       <div class="lord-f-name-row">
         <span>Lord F</span>
         <span>👑</span>
-        <span class="badge-ceo">— CEO, Sunlit Sanctuary</span>
+        <span class="badge-ceo">— CEO, 日だまりのサンクチュアリ</span>
       </div>
       <div class="lord-f-welcome-text">
-        Ho ho ho... you've arrived. Good. This sanctuary exists for one purpose:
-        to give you — the developer I have personally selected — a space free from
-        the noise of lesser timelines. Post your thoughts. Your code. Your complaints.
-        I shall respond with exactly the precision your situation demands.
+        ホッホッホ……来ましたね。よろしい。このサンクチュアリの目的はただ一つ。<br>
+        私が直々に選んだプログラマーである貴様に、下界のノイズがない空間を
+        提供するためです。日々の思考、コード、愚痴……何でも呟きなさい。<br>
+        私が、貴様の状況に完璧に適した形でレスポンスを返してあげましょう。
       </div>
     </div>
   </div>
@@ -619,26 +619,26 @@
   <!-- Timeline -->
   <div id="timeline" class="timeline">
     <div class="timeline-empty">
-      Your sanctuary awaits your first post...<br>
-      <span style="font-size: 12px; color: var(--dim);">Lord F is prepared.</span>
+      サンクチュアリはあなたの最初の投稿を待っています...<br>
+      <span style="font-size: 12px; color: var(--dim);">Lord F は準備万端です。</span>
     </div>
   </div>
 
   <!-- Compose (Sticky) -->
   <div class="compose">
     <div class="compose-inner">
-      <div class="compose-label">Post to the Sanctuary</div>
+      <div class="compose-label">サンクチュアリに投稿する</div>
       <textarea
         id="composeInput"
         class="compose-textarea"
-        placeholder="What dwells in your thoughts today? Code, frustrations, victories — Lord F receives all."
+        placeholder="今日はどんな考えが浮かんでいますか？ コード、悩み、小さな勝利……すべて Lord F が受け止めます。"
         maxlength="2000"
         onkeydown="handleComposeKey(event)"
       ></textarea>
       <div class="compose-footer">
         <span class="compose-hint" id="charCount">0 / 2000</span>
         <button class="btn btn-primary" id="postBtn" onclick="submitPost()">
-          Broadcast to Sanctuary →
+          サンクチュアリへ送信 →
         </button>
       </div>
     </div>
@@ -661,7 +661,7 @@
 const STATE = {
   userId:        null,
   introvertLevel: 0,
-  introvertLabel: 'Unclassified',
+  introvertLabel: '未分類',
   postCount:      0,
   isPosting:      false,
   scan: {
@@ -725,7 +725,7 @@ async function loadProfile() {
 }
 
 function levelLabel(n) {
-  return {0:'Unclassified', 1:'Social Camouflager', 2:'Deep Submerger', 3:'Cosmic Drifter'}[n] || 'Unclassified';
+  return {0:'未分類', 1:'社交的陰キャ（擬態モード）', 2:'技術潜行型陰キャ（専門特化）', 3:'宇宙漂流型陰キャ（超越）'}[n] || '未分類';
 }
 
 function renderLevelBadge() {
@@ -737,8 +737,8 @@ function renderLevelBadge() {
   badge.className = `level-badge lv-${STATE.introvertLevel}`;
   icon.textContent = icons[STATE.introvertLevel] || '✦';
   text.textContent = STATE.introvertLevel === 0
-    ? 'Unclassified — Run Scan'
-    : `Level ${STATE.introvertLevel} — ${STATE.introvertLabel}`;
+    ? '未測定 — スキャンを実行'
+    : `Lv.${STATE.introvertLevel} — ${STATE.introvertLabel}`;
 }
 
 // ─────────────────────────────────────
@@ -757,14 +757,14 @@ async function loadTimeline() {
     const res  = await fetch(`/api/lord-f/timeline?user_id=${STATE.userId}&limit=30`);
     const data = await res.json();
     if (!data.success || data.posts.length === 0) {
-      tl.innerHTML = `<div class="timeline-empty">Your sanctuary awaits your first post...<br><span style="font-size:12px;color:var(--dim)">Lord F is prepared.</span></div>`;
+      tl.innerHTML = `<div class="timeline-empty">サンクチュアリはあなたの最初の投稿を待っています...<br><span style="font-size:12px;color:var(--dim)">Lord F は準備万端です。</span></div>`;
       return;
     }
     // Doc: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map
     // Why: .map() declaratively transforms data to HTML — avoids imperative DOM loops
     tl.innerHTML = data.posts.map(p => buildCard(p)).join('');
   } catch (e) {
-    tl.innerHTML = `<div class="timeline-empty">Connectivity disrupted.<br><span style="font-size:12px;color:var(--dim)">Lord F is irritated.</span></div>`;
+    tl.innerHTML = `<div class="timeline-empty">通信が途絶えました。<br><span style="font-size:12px;color:var(--dim)">Lord F が苛立っています。</span></div>`;
   }
 }
 
@@ -790,7 +790,7 @@ function buildCard(post) {
       <div class="post-header">
         <div class="user-avatar">👤</div>
         <div>
-          <div class="post-author">You</div>
+          <div class="post-author">あなた</div>
           <div class="post-time">${ago}</div>
         </div>
       </div>
@@ -813,7 +813,7 @@ async function submitPost() {
   STATE.isPosting = true;
   const btn = document.getElementById('postBtn');
   btn.disabled = true;
-  btn.textContent = 'Transmitting...';
+  btn.textContent = '送信中...';
 
   // Optimistically prepend the card to timeline
   const tl      = document.getElementById('timeline');
@@ -872,13 +872,13 @@ async function submitPost() {
     card.removeChild(thinkEl);
     const errEl = document.createElement('div');
     errEl.className = 'reply-section';
-    errEl.innerHTML = `<div class="reply-text">Ho ho ho... the ether is disrupted. How irritating. Try again.</div>`;
+    errEl.innerHTML = `<div class="reply-text">ホッホッホ……通信が不安定なようですね。苛立たしい。もう一度やり直しなさい。</div>`;
     card.appendChild(errEl);
   }
 
   STATE.isPosting = false;
   btn.disabled    = false;
-  btn.textContent = 'Broadcast to Sanctuary →';
+  btn.textContent = 'サンクチュアリへ送信 →';
 }
 
 // ─────────────────────────────────────
@@ -921,12 +921,12 @@ function handleComposeKey(e) {
 // INTROVERT SCAN
 // ─────────────────────────────────────
 const QUESTIONS = [
-  "What is your favorite food?",
-  "What do you do when you have free time?",
-  "What sound do you find most soothing?",
-  "What was the last thing you searched online?",
-  "What is your ideal weekend?",
-  "Describe your perfect workspace.",
+  "好きな食べ物はなんですか？",
+  "空き時間は何をしていますか？",
+  "最も落ち着く音は何ですか？",
+  "最近ネットで検索したことは何ですか？",
+  "理想の週末の過ごし方は？",
+  "あなたにとって完璧な作業環境とは？",
 ];
 
 function openScan() {
@@ -943,7 +943,7 @@ function openScan() {
   timer.textContent = '0.0s';
   timer.className   = 'scan-timer';
   submitBtn.disabled = false;
-  submitBtn.textContent = 'Submit to Lord F →';
+  submitBtn.textContent = 'Lord F に提出 決定 →';
   submitBtn.onclick = submitScan;
 
   // Random question
@@ -997,7 +997,7 @@ async function submitScan() {
 
   const responseTime = (STATE.scan.firstKeystrokeAt - STATE.scan.questionShownAt) / 1000;
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Lord F is analyzing...';
+  submitBtn.textContent = 'Lord F が分析中...';
 
   try {
     const res  = await fetch('/api/lord-f/introvert-update', {
@@ -1025,7 +1025,7 @@ async function submitScan() {
     console.error('[LordF] Scan submit failed:', e);
   }
 
-  submitBtn.textContent = 'Close';
+  submitBtn.textContent = '閉じる';
   submitBtn.disabled    = false;
   submitBtn.onclick     = closeScan;
 }
@@ -1043,13 +1043,13 @@ document.getElementById('scanModal').addEventListener('click', function(e) {
 // Doc: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/RelativeTimeFormat
 // Why: Intl.RelativeTimeFormat produces locale-aware relative times with no external library
 function timeAgo(iso) {
-  if (!iso) return 'just now';
+  if (!iso) return 'たった今';
   try {
     const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
-    if (diff < 60)    return 'just now';
-    if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    return `${Math.floor(diff / 86400)}d ago`;
+    if (diff < 60)    return 'たった今';
+    if (diff < 3600)  return `${Math.floor(diff / 60)}分前`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}時間前`;
+    return `${Math.floor(diff / 86400)}日前`;
   } catch { return ''; }
 }
 
