@@ -37,11 +37,11 @@ graph TD
         Registry[("Artifact Registry<br/>(Docker Image)")]
         Run["Cloud Run<br/>(Python LINE Bot)"]
 
-        %% インフラ構築の流れ
-        Dev -.->|"1. terraform apply"| Backend
-        Dev -.->|"1. terraform apply"| GCP
-
     end
+
+    %% インフラ構築の流れ
+    Dev -.->|"1. terraform apply"| Backend
+    Dev -.->|"1. terraform apply"| GCP
 
     %% CI/CDの流れ
     Dev -->|"2. git push"| GH
