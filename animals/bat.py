@@ -168,6 +168,7 @@ class WatchListRequest(BaseModel):
     keyword: str
 
 @router.get("/cron/bat_check")
+@router.post("/cron/bat_check")
 def cron_bat_check():
     """
     全ユーザーの登録キーワードをチェックし、該当があれば通知する。
@@ -250,7 +251,8 @@ def _add_to_watch_list(db, user_id, keyword):
 
     current_list = []
     if doc.exists:
-        current_list = doc.to_dict().get("keywords", [])
+        data = doc.to_dict() or {}
+        current_list = data.get("keywords", [])
 
     if keyword not in current_list:
         current_list.append(keyword)
@@ -264,7 +266,8 @@ def _remove_from_watch_list(db, user_id, keyword):
     doc = doc_ref.get()
 
     if doc.exists:
-        current_list = doc.to_dict().get("keywords", [])
+        data = doc.to_dict() or {}
+        current_list = data.get("keywords", [])
         if keyword in current_list:
             current_list.remove(keyword)
             doc_ref.set({"keywords": current_list}, merge=True)
@@ -278,7 +281,8 @@ def _get_user_watch_list(db, user_id):
     doc_ref = db.collection(COLLECTION_NAME).document(user_id)
     doc = doc_ref.get()
     if doc.exists:
-        return doc.to_dict().get("keywords", [])
+        data = doc.to_dict() or {}
+        return data.get("keywords", [])
     return []
 
 def _get_all_unique_keywords(db):
@@ -287,7 +291,8 @@ def _get_all_unique_keywords(db):
     keywords_set = set()
     docs = db.collection(COLLECTION_NAME).stream()
     for doc in docs:
-        user_keywords = doc.to_dict().get("keywords", [])
+        data = doc.to_dict() or {}
+        user_keywords = data.get("keywords", [])
         for k in user_keywords:
             keywords_set.add(k)
 
