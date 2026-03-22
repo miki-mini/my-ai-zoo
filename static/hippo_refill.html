@@ -1,0 +1,2395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>極めろ！表面張力！〜詰め替え無双〜</title>
+  <!-- Google Fonts: Orbitron for HUD numbers, Noto Sans JP for Japanese -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ═══════════════════════════════════════════════════
+       GLOBAL STYLES & CSS VARIABLES
+       Color palette: bg #0a0e0a, HUD green #00ff99,
+       danger red #ff3366, amber #ffcc00, blue #00ccff
+    ═══════════════════════════════════════════════════ */
+    :root {
+      --bg: #0a0e0a;
+      --hud-green: #00ff99;
+      --danger-red: #ff3366;
+      --amber: #ffcc00;
+      --blue: #00ccff;
+      --dark-green: #003322;
+      --panel-bg: rgba(0, 20, 10, 0.85);
+      --border-glow: 0 0 8px var(--hud-green), 0 0 16px rgba(0,255,153,0.3);
+    }
+
+    /* Reset and base styles */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--hud-green);
+      font-family: 'Noto Sans JP', sans-serif;
+      -webkit-tap-highlight-color: transparent; /* Suppress tap flash on mobile */
+      touch-action: none; /* Prevent scroll during gameplay */
+    }
+
+    /* CRT scanline overlay - pseudo-element on body */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 9999;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 3px,
+        rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none; /* Allow clicks through the overlay */
+      animation: scanlineScroll 8s linear infinite;
+    }
+    @keyframes scanlineScroll {
+      from { background-position: 0 0; }
+      to   { background-position: 0 100px; }
+    }
+
+    /* Screen containers - each screen fills viewport */
+    .screen {
+      position: fixed; inset: 0;
+      display: none; /* Hidden by default; JS shows active screen */
+      flex-direction: column;
+      align-items: center;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: var(--bg);
+      max-width: 480px; /* Mobile-first constraint */
+      margin: 0 auto;
+    }
+    .screen.active { display: flex; }
+
+    /* ── SEPIA FAILURE FILTER ─────────────────────────── */
+    .sepia-filter {
+      filter: sepia(0.9) brightness(0.7) contrast(1.2);
+      animation: sepiaIn 0.5s ease forwards;
+    }
+    @keyframes sepiaIn {
+      from { filter: sepia(0) brightness(1); }
+      to   { filter: sepia(0.9) brightness(0.7) contrast(1.2); }
+    }
+
+    /* ── SCREEN SHAKE ─────────────────────────────────── */
+    @keyframes screenShake {
+      0%,100% { transform: translateX(0); }
+      15%     { transform: translateX(-12px) rotate(-1deg); }
+      30%     { transform: translateX(12px)  rotate(1deg);  }
+      45%     { transform: translateX(-8px); }
+      60%     { transform: translateX(8px);  }
+      75%     { transform: translateX(-4px); }
+      90%     { transform: translateX(4px);  }
+    }
+    .shake { animation: screenShake 0.5s ease; }
+
+    /* ── HUD PANEL STYLE ──────────────────────────────── */
+    .hud-panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--hud-green);
+      box-shadow: var(--border-glow);
+      border-radius: 4px;
+      padding: 8px 12px;
+    }
+    .hud-label {
+      font-family: 'Orbitron', monospace;
+      font-size: 10px;
+      color: rgba(0,255,153,0.6);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .hud-value {
+      font-family: 'Orbitron', monospace;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--hud-green);
+      text-shadow: 0 0 10px var(--hud-green);
+    }
+
+    /* ── BUTTONS ──────────────────────────────────────── */
+    .btn {
+      display: block; width: 100%;
+      padding: 14px 20px;
+      font-family: 'Orbitron', monospace;
+      font-size: 14px; font-weight: 700;
+      letter-spacing: 3px; text-transform: uppercase;
+      border: 2px solid var(--hud-green);
+      background: transparent;
+      color: var(--hud-green);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      position: relative; overflow: hidden;
+    }
+    .btn::before {
+      content: ''; position: absolute; inset: 0;
+      background: var(--hud-green);
+      transform: translateX(-101%);
+      transition: transform 0.15s ease;
+      z-index: 0;
+    }
+    .btn:active::before { transform: translateX(0); }
+    .btn:active { color: var(--bg); }
+    .btn span { position: relative; z-index: 1; }
+    .btn.danger  { border-color: var(--danger-red); color: var(--danger-red); }
+    .btn.danger::before { background: var(--danger-red); }
+    .btn.amber   { border-color: var(--amber); color: var(--amber); }
+    .btn.amber::before { background: var(--amber); }
+    .btn.blue    { border-color: var(--blue); color: var(--blue); }
+    .btn.blue::before { background: var(--blue); }
+
+    /* ── HOME SCREEN ──────────────────────────────────── */
+    #screen-home {
+      padding: 20px 16px;
+      gap: 12px;
+    }
+    #home-title {
+      font-family: 'Orbitron', monospace;
+      font-size: 11px; font-weight: 900;
+      letter-spacing: 2px;
+      color: var(--amber);
+      text-shadow: 0 0 12px var(--amber);
+      text-align: center;
+    }
+    #home-subtitle {
+      font-family: 'Noto Sans JP', sans-serif;
+      font-size: 18px; font-weight: 900;
+      color: #fff;
+      text-align: center;
+      text-shadow: 0 0 20px rgba(255,255,255,0.4);
+      line-height: 1.4;
+    }
+    #hippo-container {
+      width: 200px; height: 200px;
+      position: relative; margin: 0 auto;
+    }
+    #rank-panel {
+      text-align: center;
+    }
+    #ghost-panel {
+      font-size: 12px;
+      color: rgba(0,255,153,0.7);
+      text-align: center;
+    }
+    .mode-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+
+    /* ── AR MODE SCREEN ───────────────────────────────── */
+    #screen-ar {
+      padding: 0;
+    }
+    #ar-video {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 0;
+    }
+    #ar-hud-overlay {
+      position: absolute; inset: 0;
+      z-index: 10;
+      display: flex; flex-direction: column;
+      padding: 16px;
+      pointer-events: none; /* HUD elements don't block camera touch */
+    }
+    #ar-hud-overlay > * { pointer-events: auto; } /* Re-enable for interactive elements */
+    /* Animated targeting reticle */
+    #ar-reticle {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 80px; height: 80px;
+      pointer-events: none;
+    }
+    #ar-reticle::before, #ar-reticle::after {
+      content: ''; position: absolute;
+      border: 2px solid var(--hud-green);
+    }
+    #ar-reticle::before {
+      top: 0; left: 0; width: 25px; height: 25px;
+      border-right: none; border-bottom: none;
+      animation: reticlePulse 1.5s ease-in-out infinite;
+    }
+    #ar-reticle::after {
+      bottom: 0; right: 0; width: 25px; height: 25px;
+      border-left: none; border-top: none;
+      animation: reticlePulse 1.5s ease-in-out infinite reverse;
+    }
+    @keyframes reticlePulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: 0.4; transform: scale(1.1); }
+    }
+    #tilt-meter {
+      position: absolute; right: 16px; top: 50%;
+      transform: translateY(-50%);
+      width: 36px; height: 160px;
+      border: 1px solid var(--hud-green);
+      background: rgba(0,20,10,0.7);
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    #tilt-bar {
+      width: 20px; height: 30px;
+      background: var(--hud-green);
+      border-radius: 10px;
+      position: absolute;
+      transition: top 0.05s linear; /* Smooth tilt indicator movement */
+      box-shadow: 0 0 8px var(--hud-green);
+    }
+    #tilt-center-line {
+      position: absolute; width: 100%; height: 2px;
+      background: var(--amber); top: 50%; transform: translateY(-50%);
+    }
+    #sensor-enable-btn { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); width: 200px; }
+    #ar-engage-btn { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 200px; }
+    #ar-back-btn { position: absolute; top: 16px; left: 16px; width: auto; padding: 8px 16px; font-size: 11px; }
+    #mediapipe-badge {
+      position: absolute; top: 16px; right: 16px;
+      font-family: 'Orbitron', monospace; font-size: 9px;
+      padding: 4px 8px; border-radius: 2px;
+      background: rgba(0,20,10,0.8);
+      border: 1px solid var(--hud-green);
+      color: var(--hud-green);
+    }
+    #ar-angle-display {
+      position: absolute; bottom: 160px; left: 16px;
+      font-family: 'Orbitron', monospace; font-size: 12px;
+    }
+
+    /* ── TRAINING GAME SCREEN ─────────────────────────── */
+    #screen-game {
+      padding: 0;
+    }
+    #game-canvas {
+      position: absolute; inset: 0;
+      display: block;
+      width: 100%; height: 100%;
+      touch-action: none;
+    }
+    /* Game HUD overlaid on canvas */
+    #game-hud {
+      position: absolute; top: 0; left: 0; right: 0;
+      display: flex; justify-content: space-between;
+      padding: 12px;
+      pointer-events: none;
+    }
+    #game-timer { }
+    #hippo-gauge-container {
+      position: absolute; top: 12px; right: 12px;
+      width: 50px; height: 50px;
+    }
+    #pour-btn {
+      position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 120px; border-radius: 50%;
+      border: 3px solid var(--hud-green);
+      background: rgba(0,255,153,0.1);
+      font-family: 'Orbitron', monospace; font-size: 11px;
+      color: var(--hud-green); font-weight: 700;
+      cursor: pointer; user-select: none;
+      transition: background 0.1s, box-shadow 0.1s;
+      box-shadow: 0 0 20px rgba(0,255,153,0.2);
+      pointer-events: auto;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 4px;
+    }
+    #pour-btn.pouring {
+      background: rgba(0,255,153,0.3);
+      box-shadow: 0 0 40px rgba(0,255,153,0.6);
+    }
+    #pour-btn-icon { font-size: 28px; }
+    #surface-tension-alert {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 900;
+      color: var(--danger-red);
+      text-shadow: 0 0 20px var(--danger-red);
+      text-align: center;
+      animation: alertPulse 0.5s ease-in-out infinite;
+      display: none; white-space: nowrap;
+    }
+    @keyframes alertPulse {
+      0%,100% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+      50%      { opacity: 0.5; transform: translate(-50%,-50%) scale(1.05); }
+    }
+    #viscosity-selector {
+      position: absolute; bottom: 170px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 8px;
+      pointer-events: auto;
+    }
+    .visc-btn {
+      padding: 6px 12px; font-family: 'Orbitron', monospace; font-size: 9px;
+      border: 1px solid rgba(0,255,153,0.4); background: transparent;
+      color: rgba(0,255,153,0.6); cursor: pointer; border-radius: 2px;
+      transition: all 0.15s;
+    }
+    .visc-btn.active {
+      border-color: var(--hud-green); color: var(--hud-green);
+      background: rgba(0,255,153,0.15);
+      box-shadow: 0 0 8px rgba(0,255,153,0.4);
+    }
+    #game-back-btn {
+      position: absolute; top: 12px; left: 12px; width: auto;
+      padding: 6px 12px; font-size: 10px; pointer-events: auto;
+    }
+
+    /* ── RESULT SCREEN ────────────────────────────────── */
+    #screen-result {
+      padding: 40px 20px;
+      gap: 16px; justify-content: center;
+      align-items: center;
+    }
+    #result-title {
+      font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 900;
+      color: var(--amber);
+      text-shadow: 0 0 30px var(--amber), 0 0 60px rgba(255,204,0,0.5);
+      text-align: center;
+      animation: victoryPulse 1s ease-in-out infinite;
+    }
+    @keyframes victoryPulse {
+      0%,100% { text-shadow: 0 0 30px var(--amber), 0 0 60px rgba(255,204,0,0.5); }
+      50%      { text-shadow: 0 0 60px var(--amber), 0 0 120px rgba(255,204,0,0.8); }
+    }
+    #result-canvas { border-radius: 4px; }
+    #result-stats { width: 100%; }
+
+    /* ── FAILURE SCREEN ───────────────────────────────── */
+    #screen-failure {
+      padding: 40px 20px;
+      gap: 16px; justify-content: center;
+      align-items: center;
+    }
+    #failure-title {
+      font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 900;
+      color: #8B4513; /* Brown - sepia tone */
+      text-align: center;
+    }
+    #failure-subtitle {
+      font-size: 14px; color: #A0896B;
+      text-align: center;
+    }
+
+    /* ── HISTORY SCREEN ───────────────────────────────── */
+    #screen-history {
+      padding: 20px 16px; gap: 12px;
+    }
+    #history-title {
+      font-family: 'Orbitron', monospace; font-size: 14px;
+      color: var(--hud-green); text-align: center;
+      letter-spacing: 3px;
+    }
+    .history-entry {
+      width: 100%;
+      border: 1px solid rgba(0,255,153,0.3);
+      border-radius: 4px;
+      padding: 10px 12px;
+      background: rgba(0,40,20,0.4);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .history-entry .entry-date { font-size: 11px; color: rgba(0,255,153,0.6); }
+    .history-entry .entry-result { font-family: 'Orbitron', monospace; font-size: 12px; }
+    .history-entry .entry-result.win { color: var(--amber); }
+    .history-entry .entry-result.loss { color: var(--danger-red); }
+    #history-stats {
+      width: 100%;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    #history-back-btn { width: 100%; }
+
+    /* ── MOTHER HIPPO SVG STYLES ──────────────────────── */
+    .hippo-svg { transition: all 0.5s ease; }
+    /* Warning state - added via JS class */
+    .hippo-warning .hippo-eye-left,
+    .hippo-warning .hippo-eye-right { fill: #ff8800; }
+    .hippo-warning .hippo-brow-left,
+    .hippo-warning .hippo-brow-right { transform-origin: center; transform: rotate(-8deg); }
+    /* Demon/Hannya state */
+    .hippo-demon .hippo-eye-left,
+    .hippo-demon .hippo-eye-right { fill: #ff0000; filter: drop-shadow(0 0 4px #ff0000); }
+    .hippo-demon .hippo-face { fill: #cc3333; }
+    .hippo-demon .hippo-body { fill: #994444; }
+
+    /* ── GOLDEN BACKLIGHT for victory ────────────────── */
+    @keyframes goldenGlow {
+      0%,100% { box-shadow: 0 0 40px rgba(255,204,0,0.3); }
+      50%      { box-shadow: 0 0 80px rgba(255,204,0,0.8); }
+    }
+    .golden-glow { animation: goldenGlow 1s ease-in-out infinite; }
+
+    /* ── RETURN-DAYS MESSAGE ──────────────────────────── */
+    #return-msg {
+      font-size: 12px; color: var(--amber);
+      text-align: center; padding: 4px 8px;
+      border: 1px solid var(--amber);
+      border-radius: 2px; display: none;
+    }
+
+    /* ── MEDIAPIPE CANVAS ─────────────────────────────── */
+    #mp-canvas {
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 5; display: none;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--hud-green); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     HOME SCREEN
+     Shows mascot, mode selection, rank, ghost data
+ ═══════════════════════════════════════════════════ -->
+<div id="screen-home" class="screen active">
+  <div id="home-title">TACTICAL REFILL SYSTEM v3.1</div>
+  <div id="home-subtitle">極めろ！表面張力！<br>〜詰め替え無双〜</div>
+
+  <!-- Mother Hippo mascot SVG - inline for state transitions -->
+  <div id="hippo-container">
+    <svg id="hippo-home-svg" class="hippo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Body -->
+      <ellipse class="hippo-body" cx="100" cy="140" rx="70" ry="55" fill="#7a7a8a"/>
+      <!-- Head -->
+      <ellipse class="hippo-face" cx="100" cy="80" rx="55" ry="50" fill="#8a8a9a"/>
+      <!-- Ears -->
+      <circle cx="52" cy="48" r="14" fill="#7a7a8a"/>
+      <circle cx="52" cy="48" r="8"  fill="#c8a0a0"/>
+      <circle cx="148" cy="48" r="14" fill="#7a7a8a"/>
+      <circle cx="148" cy="48" r="8"  fill="#c8a0a0"/>
+      <!-- Snout -->
+      <ellipse cx="100" cy="98" rx="32" ry="22" fill="#aaaaaa"/>
+      <circle cx="89"  cy="95" r="6" fill="#555"/>
+      <circle cx="111" cy="95" r="6" fill="#555"/>
+      <!-- Eyes -->
+      <ellipse class="hippo-eye-left"  cx="80"  cy="68" rx="10" ry="11" fill="#333"/>
+      <ellipse class="hippo-eye-right" cx="120" cy="68" rx="10" ry="11" fill="#333"/>
+      <circle cx="83"  cy="65" r="3" fill="white"/>
+      <circle cx="123" cy="65" r="3" fill="white"/>
+      <!-- Glasses frames -->
+      <rect class="hippo-glasses" x="65"  y="58" width="26" height="20" rx="6" fill="none" stroke="#333" stroke-width="2.5"/>
+      <rect class="hippo-glasses" x="107" y="58" width="26" height="20" rx="6" fill="none" stroke="#333" stroke-width="2.5"/>
+      <line x1="91" y1="68" x2="107" y2="68" stroke="#333" stroke-width="2.5"/>
+      <!-- Brows (normal = stern flat) -->
+      <line class="hippo-brow-left"  x1="67"  y1="55" x2="89"  y2="55" stroke="#555" stroke-width="3" stroke-linecap="round"/>
+      <line class="hippo-brow-right" x1="109" y1="55" x2="131" y2="55" stroke="#555" stroke-width="3" stroke-linecap="round"/>
+      <!-- Mouth - default stern flat line -->
+      <path class="hippo-mouth" d="M82 112 Q100 115 118 112" stroke="#555" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Fangs for demon state (hidden by default via opacity) -->
+      <path class="hippo-fang-left"  d="M86 114 L82 126 L90 114" fill="white" opacity="0"/>
+      <path class="hippo-fang-right" d="M114 114 L118 126 L110 114" fill="white" opacity="0"/>
+    </svg>
+  </div>
+
+  <div id="return-msg">⚠ X日ぶり！腕は落ちていないか？</div>
+
+  <!-- Rank display panel -->
+  <div id="rank-panel" class="hud-panel" style="width:100%">
+    <div class="hud-label">CURRENT RANK</div>
+    <div class="hud-value" id="home-rank-display">見習い</div>
+    <div style="font-size:12px; color:rgba(0,255,153,0.6); margin-top:4px" id="home-wins-display">0 wins</div>
+  </div>
+
+  <!-- Ghost race data from last session -->
+  <div id="ghost-panel" class="hud-panel" style="width:100%">
+    <div class="hud-label">GHOST DATA</div>
+    <div id="ghost-data-text" style="font-family:'Orbitron',monospace; font-size:12px; color:var(--blue)">
+      NO GHOST DATA
+    </div>
+  </div>
+
+  <!-- Mode selection buttons -->
+  <div class="mode-grid">
+    <button class="btn blue" onclick="App.goScreen('game')"><span>🎮 TRAINING</span></button>
+    <button class="btn amber" onclick="App.goScreen('ar')"><span>📷 AR MODE</span></button>
+  </div>
+  <button class="btn" onclick="App.goScreen('history')" style="width:100%"><span>📊 HISTORY</span></button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     AR MODE SCREEN
+     Camera feed + HUD overlay + tilt meter
+ ═══════════════════════════════════════════════════ -->
+<div id="screen-ar" class="screen">
+  <!-- Live camera feed element -->
+  <video id="ar-video" autoplay muted playsinline></video>
+  <!-- MediaPipe hand/face detection overlay canvas -->
+  <canvas id="mp-canvas"></canvas>
+
+  <!-- Animated targeting reticle -->
+  <div id="ar-reticle"></div>
+
+  <!-- HUD overlay elements -->
+  <div id="ar-hud-overlay">
+    <button id="ar-back-btn" class="btn" onclick="App.goScreen('home')"><span>◀ BACK</span></button>
+    <div id="mediapipe-badge">MEDIAPIPE: LOADING...</div>
+  </div>
+
+  <!-- Tilt angle display -->
+  <div id="ar-angle-display" class="hud-panel">
+    <div class="hud-label">TILT β/γ</div>
+    <div class="hud-value" id="ar-beta">0.0°</div>
+    <div class="hud-value" id="ar-gamma">0.0°</div>
+  </div>
+
+  <!-- Vertical tilt meter indicator -->
+  <div id="tilt-meter">
+    <div id="tilt-center-line"></div>
+    <div id="tilt-bar"></div>
+  </div>
+
+  <!-- Sensor permission button (shown on iOS 13+) -->
+  <button id="sensor-enable-btn" class="btn amber" onclick="SensorManager.requestPermission()" style="display:none">
+    <span>🔓 ENABLE SENSORS</span>
+  </button>
+
+  <!-- Start game session button -->
+  <button id="ar-engage-btn" class="btn danger" onclick="App.goScreen('game')">
+    <span>⚡ ENGAGE</span>
+  </button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     TRAINING GAME SCREEN
+     Canvas-based physics pour game
+ ═══════════════════════════════════════════════════ -->
+<div id="screen-game" class="screen">
+  <!-- Main game canvas - fills entire screen -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- HUD overlay (pointer-events none so canvas gets touches) -->
+  <div id="game-hud">
+    <div class="hud-panel" id="game-timer-panel">
+      <div class="hud-label">TIME</div>
+      <div class="hud-value" id="game-timer">00:00</div>
+    </div>
+    <!-- Ghost delta display -->
+    <div class="hud-panel">
+      <div class="hud-label">GHOST</div>
+      <div class="hud-value" id="ghost-delta" style="color:var(--blue)">--</div>
+    </div>
+  </div>
+
+  <!-- Surface tension alert - shown when 90% full -->
+  <div id="surface-tension-alert">⚠ SURFACE TENSION MODE ⚠<br><span style="font-size:10px">揺らすな — HOLD STILL</span></div>
+
+  <!-- Viscosity level selector -->
+  <div id="viscosity-selector">
+    <button class="visc-btn active" onclick="GameEngine.setViscosity(1)" id="visc-1">Lv1<br><span style="font-size:7px">TONER</span></button>
+    <button class="visc-btn" onclick="GameEngine.setViscosity(2)" id="visc-2">Lv2<br><span style="font-size:7px">SOAP</span></button>
+    <button class="visc-btn" onclick="GameEngine.setViscosity(3)" id="visc-3">Lv3<br><span style="font-size:7px">COND.</span></button>
+  </div>
+
+  <!-- Pour hold button (big circular, touch/mouse) -->
+  <button id="pour-btn" id="pour-btn">
+    <div id="pour-btn-icon">💧</div>
+    <div style="font-size:9px">HOLD</div>
+  </button>
+
+  <!-- Back button -->
+  <button id="game-back-btn" class="btn" onclick="App.goScreen('home')"><span>◀</span></button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     RESULT (SUCCESS) SCREEN
+ ═══════════════════════════════════════════════════ -->
+    <div id="screen-result" class="screen">
+      <div id="result-title">PERFECT REFILL!</div>
+      <div style="position:relative; height:220px; width:100%; display:flex; justify-content:center; align-items:center;">
+        <canvas id="result-canvas" width="300" height="220" style="position:absolute; inset:0; margin:0 auto; pointer-events:none; z-index:1;"></canvas>
+        <img src="images/seikou.png" alt="Success" style="max-height:200px; max-width:100%; object-fit:contain; position:relative; z-index:2; border-radius:8px;">
+      </div>
+      <div class="hud-panel" id="result-stats" style="text-align:center; width:100%;">
+    <div class="hud-label" style="margin-bottom:8px">SESSION STATS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div class="hud-label">TIME</div><div class="hud-value" id="result-time" style="font-size:16px">--</div></div>
+      <div><div class="hud-label">SPILLS</div><div class="hud-value" id="result-spills" style="font-size:16px; color:var(--danger-red)">--</div></div>
+      <div><div class="hud-label">RANK</div><div class="hud-value" id="result-rank" style="font-size:16px; color:var(--amber)">--</div></div>
+      <div><div class="hud-label">GHOST</div><div class="hud-value" id="result-ghost" style="font-size:16px; color:var(--blue)">--</div></div>
+    </div>
+  </div>
+  <button class="btn amber" onclick="App.goScreen('game')" style="width:100%"><span>▶ PLAY AGAIN</span></button>
+  <button class="btn" onclick="App.goScreen('home')" style="width:100%"><span>🏠 HOME</span></button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     FAILURE SCREEN
+     Sepia filter, sad hippo
+ ═══════════════════════════════════════════════════ -->
+<div id="screen-failure" class="screen sepia-filter">
+  <img src="images/hannya.png" alt="Failure" style="width: 250px; height: auto; max-height: 250px; object-fit: contain;">
+  <div id="failure-title">こぼれた。</div>
+  <div id="failure-subtitle">もう一度集中しろ。</div>
+  <div class="hud-panel" style="width:100%;background:rgba(40,20,10,0.85);border-color:#8B4513">
+    <div style="color:#A0896B;font-size:11px;letter-spacing:2px">CAUSE OF FAILURE</div>
+    <div id="failure-reason" style="font-family:'Orbitron',monospace;font-size:14px;color:#cc6633;margin-top:4px">OVERFLOW</div>
+  </div>
+  <button class="btn danger" onclick="App.goScreen('game')" style="width:100%"><span>↺ RETRY</span></button>
+  <button class="btn" onclick="App.goScreen('home')" style="width:100%;border-color:#8B4513;color:#8B4513"><span>🏠 HOME</span></button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     HISTORY SCREEN
+ ═══════════════════════════════════════════════════ -->
+<div id="screen-history" class="screen">
+  <div id="history-title">SESSION HISTORY</div>
+  <div id="history-stats">
+    <div class="hud-panel">
+      <div class="hud-label">TOTAL WINS</div>
+      <div class="hud-value" id="hist-wins">0</div>
+    </div>
+    <div class="hud-panel">
+      <div class="hud-label">BEST TIME</div>
+      <div class="hud-value" id="hist-best" style="font-size:16px">--</div>
+    </div>
+    <div class="hud-panel">
+      <div class="hud-label">RANK</div>
+      <div class="hud-value" id="hist-rank" style="font-size:14px;color:var(--amber)">--</div>
+    </div>
+    <div class="hud-panel">
+      <div class="hud-label">SESSIONS</div>
+      <div class="hud-value" id="hist-total">0</div>
+    </div>
+  </div>
+  <div id="history-list" style="width:100%;display:flex;flex-direction:column;gap:6px"></div>
+  <button id="history-back-btn" class="btn" onclick="App.goScreen('home')"><span>◀ BACK</span></button>
+</div>
+
+<script>
+"use strict";
+
+// ═══════════════════════════════════════════════════
+// SECTION 1: DOCUMENTATION REFERENCES
+// MDN and Web API documentation for all APIs used
+// ═══════════════════════════════════════════════════
+// Canvas 2D API:        https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+// Web Audio API:        https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
+// SpeechSynthesis:      https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesis
+// getUserMedia:         https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+// DeviceOrientationEvent: https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent
+// localStorage:         https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
+// requestAnimationFrame: https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame
+// Touch Events:         https://developer.mozilla.org/en-US/docs/Web/API/Touch_events
+// CSS Animations:       https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_animations
+// MediaPipe Hands:      https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
+// MediaPipe FaceMesh:   https://developers.google.com/mediapipe/solutions/vision/face_landmarker
+// ResizeObserver:       https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver
+
+// ═══════════════════════════════════════════════════
+// SECTION 2: APP STATE
+// Central mutable state object for the running session
+// ═══════════════════════════════════════════════════
+
+const State = {
+  // Which screen is currently visible
+  currentScreen: 'home',
+
+  // Viscosity level 1=Toner(fast), 2=BodySoap(normal), 3=Conditioner(slow)
+  viscosity: 1,
+
+  // Fill level of the bottle: 0.0 to 1.0 (100%)
+  fillLevel: 0.0,
+
+  // Whether the player is currently holding the pour button
+  isPouring: false,
+
+  // Whether surface tension mode is active (fill >= 0.9)
+  surfaceTensionMode: false,
+
+  // Seconds held still during surface tension mode (need 4 to win)
+  tensionHoldSeconds: 0,
+
+  // Timestamp when tension hold started
+  tensionHoldStart: null,
+
+  // Number of spills (overflow events) this session
+  spillCount: 0,
+
+  // Reason for failure (shown on failure screen)
+  failureReason: 'OVERFLOW',
+
+  // Session start timestamp in ms
+  sessionStart: null,
+
+  // Session duration in ms when finished
+  sessionDuration: null,
+
+  // Current device beta angle (front-back tilt in degrees)
+  betaAngle: 0,
+
+  // Current device gamma angle (left-right tilt in degrees)
+  gammaAngle: 0,
+
+  // Pour angle derived from mouse/touch drag or gyro
+  pourAngle: 0,
+
+  // Mother Hippo anger level: 0.0 (calm) to 1.0 (demon)
+  hippoAnger: 0.0,
+
+  // Whether camera stream is active
+  cameraActive: false,
+
+  // Whether sensors (DeviceOrientation) are granted
+  sensorsGranted: false,
+
+  // Session game loop animation frame ID (for cancellation)
+  animFrameId: null,
+
+  // Ghost best time in ms from previous sessions
+  ghostBestMs: null,
+
+  // Wave offset for animated liquid surface rendering
+  waveOffset: 0,
+
+  // Particle array for success/failure animations
+  particles: [],
+
+  // Hippo gauge display element reference
+  hippoGaugeEl: null,
+
+  // Last time voice was spoken (throttle repeated speech)
+  lastVoiceTime: 0,
+
+  // Pour button DOM element reference
+  pourBtnEl: null,
+
+  // Whether MediaPipe is available
+  mediapipeAvailable: false,
+
+  // Track if game is running (prevents double-start)
+  gameRunning: false,
+
+  // Flag to override sensor data if user uses mouse/touch
+  manualOverride: false,
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 3: PERSISTENCE (localStorage)
+// Save/load session history and user preferences
+// https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage
+// ═══════════════════════════════════════════════════
+
+const Storage = {
+  // Key used in localStorage for all app data
+  KEY: 'hippo_refill_v1',
+
+  // Load saved data, returning defaults if nothing stored
+  load() {
+    try {
+      // Attempt to parse existing JSON from storage
+      const raw = localStorage.getItem(this.KEY);
+      // Return parsed object or fresh default structure
+      return raw ? JSON.parse(raw) : this.defaults();
+    } catch(e) {
+      // If JSON is corrupt, return defaults to avoid crash
+      console.warn('[Storage] parse error, using defaults', e);
+      return this.defaults();
+    }
+  },
+
+  // Save data object back to localStorage as JSON
+  save(data) {
+    try {
+      localStorage.setItem(this.KEY, JSON.stringify(data));
+    } catch(e) {
+      // Storage quota exceeded or private-mode block - log and continue
+      console.warn('[Storage] save failed', e);
+    }
+  },
+
+  // Return a fresh default data structure for new users
+  defaults() {
+    return {
+      sessions: [],   // Array of session result objects
+      totalWins: 0,   // Cumulative win count (for rank calculation)
+      bestTimeMs: null, // Personal best completion time in ms
+      lastSessionDate: null, // ISO date string of last played session
+    };
+  },
+
+  // Append a completed session and update aggregate stats
+  // session: { date, viscosity, durationMs, spillCount, result, spillAreaCm2 }
+  recordSession(session) {
+    const data = this.load(); // Load current data from storage
+    data.sessions.push(session); // Append new session record
+    data.lastSessionDate = session.date; // Update last-played date
+
+    if (session.result === 'WIN') {
+      data.totalWins++; // Increment win counter for rank progression
+      // Update personal best if this session was faster
+      if (!data.bestTimeMs || session.durationMs < data.bestTimeMs) {
+        data.bestTimeMs = session.durationMs; // New personal best!
+      }
+    }
+    this.save(data); // Persist updated data
+    return data; // Return updated data for immediate use
+  },
+
+  // Compute rank title based on cumulative win count
+  getRank(wins) {
+    if (wins >= 30) return '人間国宝';      // 30+ wins: Living National Treasure
+    if (wins >= 10) return '流体マスター';  // 10+ wins: Fluid Master
+    if (wins >= 5)  return '鉄人';          // 5+ wins: Iron Man
+    return '見習い';                         // Default: Apprentice
+  },
+
+  // Check if last session was more than 30 days ago
+  getDaysAway() {
+    const data = this.load();
+    if (!data.lastSessionDate) return 0; // No previous session
+    const last = new Date(data.lastSessionDate);
+    const now  = new Date();
+    // Divide ms difference by ms-per-day and round down
+    return Math.floor((now - last) / (1000 * 60 * 60 * 24));
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 4: SCREEN MANAGER
+// Controls which screen is visible at any time
+// ═══════════════════════════════════════════════════
+
+const ScreenManager = {
+  // Map of screen IDs to their DOM elements (populated on init)
+  screens: {},
+
+  // Initialize by collecting all .screen elements into map
+  init() {
+    document.querySelectorAll('.screen').forEach(el => {
+      // Use element ID minus 'screen-' prefix as key
+      const key = el.id.replace('screen-', '');
+      this.screens[key] = el;
+    });
+  },
+
+  // Show the named screen, hide all others
+  show(name) {
+    Object.entries(this.screens).forEach(([key, el]) => {
+      if (key === name) {
+        el.classList.add('active');    // Make target visible
+        el.scrollTop = 0;             // Reset scroll position
+      } else {
+        el.classList.remove('active'); // Hide all others
+      }
+    });
+    State.currentScreen = name; // Update global state tracker
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 5: CAMERA MANAGER (getUserMedia)
+// https://developer.mozilla.org/en-US/docs/Web/API/MediaDevices/getUserMedia
+// ═══════════════════════════════════════════════════
+
+const CameraManager = {
+  // Reference to the active MediaStream (needed to stop tracks)
+  stream: null,
+
+  // Start the rear-facing camera and pipe to <video> element
+  async start() {
+    const videoEl = document.getElementById('ar-video');
+    try {
+      // Request camera with environment (rear) preference, no audio
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 480 }, height: { ideal: 640 } },
+        audio: false,
+      });
+      videoEl.srcObject = this.stream; // Attach stream to video element
+      State.cameraActive = true;
+      // Resize MediaPipe canvas to match video dimensions once loaded
+      videoEl.onloadedmetadata = () => {
+        const mpCanvas = document.getElementById('mp-canvas');
+        mpCanvas.width  = videoEl.videoWidth;
+        mpCanvas.height = videoEl.videoHeight;
+      };
+    } catch(e) {
+      // Camera permission denied or hardware unavailable
+      console.warn('[Camera] getUserMedia failed:', e.message);
+      State.cameraActive = false;
+    }
+  },
+
+  // Stop all camera tracks to release hardware
+  stop() {
+    if (this.stream) {
+      this.stream.getTracks().forEach(t => t.stop()); // Release each track
+      this.stream = null;
+      State.cameraActive = false;
+    }
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 6: SENSOR MANAGER (DeviceOrientation)
+// https://developer.mozilla.org/en-US/docs/Web/API/DeviceOrientationEvent
+// ═══════════════════════════════════════════════════
+
+const SensorManager = {
+  // Whether the orientation listener is active
+  listening: false,
+
+  // Initialize sensors - request permission on iOS 13+
+  async init() {
+    if (typeof DeviceOrientationEvent === 'undefined') {
+      // Device/browser doesn't support orientation events at all
+      console.warn('[Sensors] DeviceOrientationEvent not supported');
+      return;
+    }
+
+    const isMobile = /Phone|iPad|iPod|Android|Mobi/i.test(navigator.userAgent);
+
+    // iOS 13+ requires explicit user permission via requestPermission()
+    if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+      // Show the enable button; we can't request without user gesture
+      document.getElementById('sensor-enable-btn').style.display = 'block';
+    } else if (isMobile) {
+      // Android grants automatically - start immediately only on mobile
+      this.startListening();
+    } else {
+      // Desktop device (like MacBook). DO NOT auto-enable sensors
+      // because the laptop hinge angle creates a constant 60° tilt!
+      console.info('[Sensors] Disabled default sensors for desktop');
+    }
+  },
+
+  // Called when user taps "Enable Sensors" button (iOS 13+)
+  async requestPermission() {
+    try {
+      const result = await DeviceOrientationEvent.requestPermission();
+      if (result === 'granted') {
+        State.sensorsGranted = true;
+        this.startListening(); // Begin receiving events
+        document.getElementById('sensor-enable-btn').style.display = 'none';
+      }
+    } catch(e) {
+      console.warn('[Sensors] permission request failed:', e);
+    }
+  },
+
+  // Attach the deviceorientation event listener
+  startListening() {
+    if (this.listening) return; // Prevent duplicate listeners
+    window.addEventListener('deviceorientation', this.handleOrientation.bind(this), true);
+    this.listening = true;
+    State.sensorsGranted = true;
+  },
+
+  // Handle each orientation event - update State angles and UI
+  handleOrientation(event) {
+    // beta: front-to-back tilt in degrees (-180 to 180), 0 = flat
+    State.betaAngle  = event.beta  || 0;
+    // gamma: left-to-right tilt in degrees (-90 to 90), 0 = flat
+    State.gammaAngle = event.gamma || 0;
+
+    // Update AR screen angle readouts if that screen is active
+    if (State.currentScreen === 'ar') {
+      document.getElementById('ar-beta').textContent  = State.betaAngle.toFixed(1)  + '°';
+      document.getElementById('ar-gamma').textContent = State.gammaAngle.toFixed(1) + '°';
+
+      // Move tilt indicator bar within the vertical meter
+      const meter  = document.getElementById('tilt-bar');
+      const clampedGamma = Math.max(-30, Math.min(30, State.gammaAngle)); // Clamp to ±30°
+      const pct    = (clampedGamma + 30) / 60; // Normalize to 0-1
+      const meterH = 160; // Height of tilt-meter in px
+      const barH   = 30;  // Height of tilt-bar in px
+      meter.style.top = (pct * (meterH - barH)) + 'px'; // Position bar
+    }
+
+    // In game, use gamma as pouring tilt angle
+    if (State.currentScreen === 'game' && State.gameRunning) {
+      if (!State.manualOverride) {
+        State.pourAngle = State.gammaAngle; // Directly use left-right tilt
+      }
+    }
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 7: AUDIO MANAGER (Web Audio API)
+// All sounds generated procedurally - NO external files
+// https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
+// https://developer.mozilla.org/en-US/docs/Web/API/AudioContext
+// https://developer.mozilla.org/en-US/docs/Web/API/OscillatorNode
+// https://developer.mozilla.org/en-US/docs org/Web/API/BiquadFilterNode
+// ═══════════════════════════════════════════════════
+
+const AudioManager = {
+  // AudioContext - the root of the Web Audio API graph
+  ctx: null,
+
+  // Persistent nodes for looping sounds
+  pourNode: null,       // Pour sound (bandpass-filtered noise)
+  heartbeatId: null,    // setInterval ID for heartbeat rhythm
+  tensionOsc: null,     // Low drone oscillator for surface tension
+  tensionGain: null,    // Gain node for drone fade-in
+
+  // Lazily create AudioContext on first user interaction
+  // (browsers block AudioContext creation before user gesture)
+  getCtx() {
+    if (!this.ctx) {
+      this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    // Resume if suspended (browser may suspend inactive contexts)
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    return this.ctx;
+  },
+
+  // Play pour sound: bandpass-filtered white noise around 800Hz
+  startPour() {
+    if (this.pourNode) return; // Already playing
+    const ctx = this.getCtx();
+
+    // Create a buffer of white noise (1 second, mono)
+    const bufLen = ctx.sampleRate; // Samples per second
+    const buffer = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const data   = buffer.getChannelData(0); // Get Float32Array ref
+    for (let i = 0; i < bufLen; i++) {
+      data[i] = (Math.random() * 2) - 1; // Random values in [-1, 1]
+    }
+
+    // BufferSource loops the noise continuously
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop   = true; // Loop to sustain sound while pouring
+
+    // Bandpass filter centered at 800Hz simulates liquid pour
+    const filter = ctx.createBiquadFilter();
+    filter.type            = 'bandpass';
+    filter.frequency.value = 800;  // Center frequency in Hz
+    filter.Q.value         = 0.8;  // Bandwidth control (lower = wider)
+
+    // Master gain to control pour volume
+    const gain = ctx.createGain();
+    gain.gain.value = 0.15; // Subtle, not overwhelming
+
+    // Connect: source → filter → gain → output
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    source.start();
+
+    this.pourNode = { source, gain }; // Store for later stop
+  },
+
+  // Stop the pour sound with a short fade-out
+  stopPour() {
+    if (!this.pourNode) return; // Nothing to stop
+    const { source, gain } = this.pourNode;
+    const ctx = this.getCtx();
+    // Ramp gain to 0 over 0.1s to avoid click artifact
+    gain.gain.setTargetAtTime(0, ctx.currentTime, 0.05);
+    // Stop the source node after the fade completes
+    setTimeout(() => { try { source.stop(); } catch(e){} }, 200);
+    this.pourNode = null;
+  },
+
+  // Play single heartbeat pulse: 60Hz oscillator with sharp amplitude envelope
+  playHeartbeat() {
+    const ctx = this.getCtx();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type            = 'sine';
+    osc.frequency.value = 60; // Low bass thump frequency in Hz
+
+    // Sharp attack (0s to peak) then fast decay for thump feel
+    const now = ctx.currentTime;
+    gain.gain.setValueAtTime(0, now);             // Start silent
+    gain.gain.linearRampToValueAtTime(0.6, now + 0.02); // Attack: 20ms to full
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); // Decay: 300ms to silent
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.35); // Stop slightly after full decay
+  },
+
+  // Start repeating heartbeat (called when entering surface tension mode)
+  startHeartbeat() {
+    if (this.heartbeatId) return; // Already running
+    this.playHeartbeat(); // Play immediately
+    // Play every 700ms (approx 86 BPM - tense but not frantic)
+    this.heartbeatId = setInterval(() => this.playHeartbeat(), 700);
+  },
+
+  // Stop the heartbeat rhythm
+  stopHeartbeat() {
+    if (this.heartbeatId) {
+      clearInterval(this.heartbeatId); // Cancel the interval
+      this.heartbeatId = null;
+    }
+  },
+
+  // Start low tension drone that slowly grows in volume
+  startTensionDrone() {
+    if (this.tensionOsc) return; // Already active
+    const ctx = this.getCtx();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type            = 'sine';
+    osc.frequency.value = 80; // Sub-bass frequency for dread feeling
+
+    gain.gain.setValueAtTime(0, ctx.currentTime); // Start silent
+    // Slowly ramp up over 3 seconds for creeping dread effect
+    gain.gain.linearRampToValueAtTime(0.12, ctx.currentTime + 3);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+
+    // Store references for later stop
+    this.tensionOsc  = osc;
+    this.tensionGain = gain;
+  },
+
+  // Stop all surface tension audio effects
+  stopTensionAudio() {
+    this.stopHeartbeat(); // Stop rhythm
+    if (this.tensionOsc) {
+      const { tensionOsc: osc, tensionGain: gain } = this;
+      const ctx = this.getCtx();
+      // Fade drone out quickly
+      gain.gain.setTargetAtTime(0, ctx.currentTime, 0.1);
+      setTimeout(() => { try { osc.stop(); } catch(e){} }, 300);
+      this.tensionOsc  = null;
+      this.tensionGain = null;
+    }
+  },
+
+  // Play failure chord: D minor (D3=293, F3=349, A3=440, C4=523 Hz)
+  // Triangle wave, arpeggiated (each note starts slightly later)
+  playFailure() {
+    const ctx    = this.getCtx();
+    const freqs  = [293.66, 349.23, 440.00, 523.25]; // D minor chord frequencies
+    freqs.forEach((freq, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type            = 'triangle'; // Warmer than square for piano-like tone
+      osc.frequency.value = freq;
+
+      const startTime = ctx.currentTime + i * 0.08; // Arpeggiate: 80ms between notes
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.25, startTime + 0.05); // Quick attack
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 2.5); // Long decay (sad)
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + 3.0); // Stop after full decay
+    });
+  },
+
+  // Play victory fanfare: C major ascent (C5=523, E5=659, G5=784, C6=1047 Hz)
+  // Sawtooth wave for bright trumpet-like quality
+  playVictory() {
+    const ctx    = this.getCtx();
+    const freqs  = [523.25, 659.25, 783.99, 1046.50]; // C major ascent
+    freqs.forEach((freq, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type            = 'sawtooth'; // Bright, harmonics-rich for fanfare
+      osc.frequency.value = freq;
+
+      const startTime = ctx.currentTime + i * 0.12; // 120ms between ascending notes
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.2, startTime + 0.03); // Snappy attack
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.8); // Shorter decay (bright)
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + 1.0);
+    });
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 8: VOICE MANAGER (SpeechSynthesis)
+// Japanese TTS for navigation and coaching
+// https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesis
+// https://developer.mozilla.org/en-US/docs/Web/API/SpeechSynthesisUtterance
+// ═══════════════════════════════════════════════════
+
+const VoiceManager = {
+  // Minimum ms between voice lines to avoid overlap
+  COOLDOWN: 3500,
+
+  // Speak a Japanese string with stern-mother voice settings
+  speak(text) {
+    if (!window.speechSynthesis) return; // API not available in this browser
+    const now = Date.now();
+    // Throttle: don't speak if another line was spoken recently
+    if (now - State.lastVoiceTime < this.COOLDOWN) return;
+    State.lastVoiceTime = now; // Update last-spoken timestamp
+
+    // Cancel any currently speaking utterance
+    window.speechSynthesis.cancel();
+
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang  = 'ja-JP';  // Japanese language for correct pronunciation
+    utter.pitch = 0.8;       // Lower pitch = stern mother voice (0=low, 2=high)
+    utter.rate  = 1.0;       // Normal speaking rate
+    utter.volume = 0.9;      // Near-max volume for authority
+
+    // Try to find a Japanese voice if available
+    const voices = window.speechSynthesis.getVoices();
+    const jaVoice = voices.find(v => v.lang.startsWith('ja'));
+    if (jaVoice) utter.voice = jaVoice; // Use Japanese voice if found
+
+    window.speechSynthesis.speak(utter); // Queue and play utterance
+  },
+
+  // ─ Specific voice lines ─────────────────────────
+
+  // Opening instruction when game starts
+  onStart() { this.speak('詰め替え開始。粘度を確認してください。'); },
+
+  // Tilt correction: device is tilted too much
+  onBadTilt() { this.speak('3度傾けてください！'); },
+
+  // Positive feedback: angle is correct
+  onGoodTilt() { this.speak('そのまま！完璧です！'); },
+
+  // Warning: bottle is nearly full
+  onNearOverflow() { this.speak('止まれ！入れ過ぎだ！'); },
+
+  // Mode announcement: entering surface tension challenge
+  onSurfaceTension() { this.speak('ここからは表面張力との戦いだ。揺らすな。'); },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 9: MEDIAPIPE MANAGER (Optional)
+// Gracefully handles unavailability
+// https://developers.google.com/mediapipe/solutions/vision/hand_landmarker
+// https://developers.google.com/mediapipe/solutions/vision/face_landmarker
+// ═══════════════════════════════════════════════════
+
+const MediaPipeManager = {
+  // Whether MediaPipe loaded successfully from CDN
+  available: false,
+
+  // Recent wrist Y positions for shake detection
+  wristHistory: [],
+
+  // Maximum wrist movement variance allowed in Surface Tension Mode
+  SHAKE_THRESHOLD: 0.04,
+
+  // Try to load MediaPipe from CDN - graceful fallback if unavailable
+  async init() {
+    const badge = document.getElementById('mediapipe-badge');
+    try {
+      // Dynamic import of MediaPipe Hands from CDN
+      // Using holistic/legacy build that works without bundler
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        // Use the MediaPipe Hands CDN bundle
+        script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js';
+        script.onload  = resolve;  // Resolve promise when script loads
+        script.onerror = reject;   // Reject if CDN unavailable or blocked
+        document.head.appendChild(script);
+      });
+      this.available = true; // Mark as available if loaded
+      State.mediapipeAvailable = true;
+      badge.textContent = 'MEDIAPIPE: ACTIVE';
+      badge.style.color  = '#00ff99'; // Green = active
+    } catch(e) {
+      // CDN failed or offline - mark unavailable, continue without it
+      this.available = false;
+      badge.textContent = 'MEDIAPIPE: UNAVAILABLE';
+      badge.style.color  = '#ff3366'; // Red = unavailable
+      console.info('[MediaPipe] not available - running without detection');
+    }
+  },
+
+  // Check wrist stability - called each frame in surface tension mode
+  // Returns true if shake detected (fail condition)
+  checkWristShake(landmarks) {
+    if (!landmarks || landmarks.length === 0) return false; // No hands detected
+    // Wrist is landmark index 0 in MediaPipe Hands model
+    const wristY = landmarks[0][0].y; // Y coordinate normalized 0-1
+    this.wristHistory.push(wristY); // Record wrist position
+    if (this.wristHistory.length > 10) this.wristHistory.shift(); // Keep last 10
+
+    // Compute variance of wrist positions to detect instability
+    const mean = this.wristHistory.reduce((a, b) => a + b, 0) / this.wristHistory.length;
+    const variance = this.wristHistory.reduce((sum, y) => sum + Math.pow(y - mean, 2), 0) / this.wristHistory.length;
+
+    return variance > this.SHAKE_THRESHOLD; // True = too much movement
+  },
+
+  // Check if player has an 'O face' (mouth open) - fail condition
+  // Uses FaceMesh landmarks 13 (upper lip) and 14 (lower lip)
+  checkMouthOpen(faceLandmarks) {
+    if (!faceLandmarks || faceLandmarks.length < 2) return false;
+    const upperLip = faceLandmarks[13]; // Upper inner lip landmark
+    const lowerLip = faceLandmarks[14]; // Lower inner lip landmark
+    // Calculate Euclidean distance between lip landmarks
+    const dist = Math.abs(upperLip.y - lowerLip.y);
+    return dist > 0.06; // Threshold: mouth open more than 6% of face height
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 10: MOTHER HIPPO MANAGER
+// Controls hippo SVG expression based on anger level
+// ═══════════════════════════════════════════════════
+
+const HippoManager = {
+  // Reference to the in-game hippo mini-SVG drawn on canvas
+  // The home screen uses the large inline SVG (#hippo-home-svg)
+
+  // Update home screen hippo SVG based on current anger level
+  // anger: 0.0 = calm, 0.5+ = warning, 0.9+ = demon/Hannya
+  updateExpression(anger) {
+    const svg = document.getElementById('hippo-home-svg');
+    if (!svg) return; // Guard: screen may not be visible
+
+    // Remove all state classes before re-applying correct one
+    svg.classList.remove('hippo-warning', 'hippo-demon');
+
+    if (anger >= 0.9) {
+      // DEMON STATE: Red eyes, fangs visible, red tint
+      svg.classList.add('hippo-demon');
+      // Show fang elements by setting opacity
+      svg.querySelectorAll('.hippo-fang-left, .hippo-fang-right')
+         .forEach(el => el.setAttribute('opacity', '1'));
+      // Change mouth to wide demon grin
+      svg.querySelector('.hippo-mouth')
+         .setAttribute('d', 'M78 112 Q100 124 122 112');
+    } else if (anger >= 0.5) {
+      // WARNING STATE: Furrowed brows, frown expression
+      svg.classList.add('hippo-warning');
+      svg.querySelectorAll('.hippo-fang-left, .hippo-fang-right')
+         .forEach(el => el.setAttribute('opacity', '0'));
+      // Adjust brow lines to show furrowing
+      const browL = svg.querySelector('.hippo-brow-left');
+      const browR = svg.querySelector('.hippo-brow-right');
+      if (browL) browL.setAttribute('d', ''); // SVG lines don't use 'd' but set stroke
+      svg.querySelector('.hippo-mouth')
+         .setAttribute('d', 'M84 114 Q100 110 116 114'); // Slight frown
+    } else {
+      // NORMAL STATE: Stern but neutral expression
+      svg.querySelectorAll('.hippo-fang-left, .hippo-fang-right')
+         .forEach(el => el.setAttribute('opacity', '0'));
+      svg.querySelector('.hippo-mouth')
+         .setAttribute('d', 'M82 112 Q100 115 118 112'); // Flat stern line
+    }
+  },
+
+  // Increase hippo anger by given amount (clamped to 1.0)
+  anger(amount) {
+    State.hippoAnger = Math.min(1.0, State.hippoAnger + amount);
+    this.updateExpression(State.hippoAnger); // Update SVG immediately
+  },
+
+  // Reset anger to 0 (called on session start)
+  reset() {
+    State.hippoAnger = 0;
+    this.updateExpression(0);
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 11: TRAINING GAME ENGINE (Canvas)
+// Core gameplay: bottle fill, liquid physics, pour mechanics
+// https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+// https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame
+// ═══════════════════════════════════════════════════
+
+const GameEngine = {
+  // Canvas and 2D rendering context references
+  canvas: null,
+  ctx: null,
+
+  // Timestamp of the last rendered frame (for delta-time calculation)
+  lastFrameTime: 0,
+
+  // Timing: how many ms at current viscosity to fill from 0 to 100%
+  FILL_RATES: {
+    1: 0.0012, // Toner: fills 0.12% per ms (fast)
+    2: 0.0007, // Body soap: fills 0.07% per ms (normal)
+    3: 0.0004, // Conditioner: fills 0.04% per ms (slow)
+  },
+
+  // Pouch drag state for mouse/touch tilt control
+  pouchDrag: { active: false, startY: 0, currentAngle: 0 },
+
+  // Initialize canvas and attach input listeners
+  init() {
+    this.canvas = document.getElementById('game-canvas');
+    this.ctx    = this.canvas.getContext('2d'); // Get 2D rendering context
+
+    // Size canvas to match CSS display size for crisp rendering
+    this.resizeCanvas();
+
+    // ResizeObserver watches for screen size changes (orientation change)
+    new ResizeObserver(() => this.resizeCanvas()).observe(this.canvas);
+
+    // Pour button: hold = pour, release = stop (both touch and mouse)
+    const pourBtn = document.getElementById('pour-btn');
+    State.pourBtnEl = pourBtn;
+
+    // Touch events for mobile pour button
+    pourBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault(); // Prevent scroll/zoom while holding button
+      this.startPour();
+    }, { passive: false }); // passive:false allows preventDefault
+
+    pourBtn.addEventListener('touchend',   (e) => { this.stopPour();  }, { passive: false });
+    pourBtn.addEventListener('touchcancel',(e) => { this.stopPour();  }, { passive: false });
+    window.addEventListener('touchend',    (e) => { this.stopPour();  });
+
+    // Mouse events for desktop testing
+    pourBtn.addEventListener('mousedown', () => this.startPour());
+    window.addEventListener('mouseup',    () => this.stopPour());
+
+    // Canvas touch for pouch tilt (drag up = tilt, down = upright)
+    this.canvas.addEventListener('touchstart', (e) => this.handleCanvasTouch(e), { passive: false });
+    this.canvas.addEventListener('touchmove',  (e) => this.handleCanvasTouchMove(e), { passive: false });
+    this.canvas.addEventListener('touchend',   (e) => this.handleCanvasTouchEnd(e));
+
+    // PC: ドラッグ中（左ボタン押しながら移動）のみ角度変更。ホバーだけでは変わらない
+    this.canvas.addEventListener('mousedown',  (e) => this.handleCanvasMouseDown(e));
+    this.canvas.addEventListener('mousemove',  (e) => this.handleCanvasMouseMove(e));
+    this.canvas.addEventListener('mouseleave', () => {
+      // カーソルがキャンバス外に出たらドラッグ終了・角度リセット
+      this.pouchDrag.active = false;
+      State.pourAngle = 0;
+    });
+  },
+
+  // Resize canvas pixel dimensions to match CSS display size
+  resizeCanvas() {
+    const rect  = this.canvas.getBoundingClientRect();
+    this.canvas.width  = rect.width  || window.innerWidth;   // Set pixel width
+    this.canvas.height = rect.height || window.innerHeight;  // Set pixel height
+  },
+
+  // Handle touch start on canvas for pouch tilt
+  handleCanvasTouch(e) {
+    if (e.target === State.pourBtnEl) return; // Don't conflict with pour button
+    const touch = e.touches[0];
+    this.pouchDrag.active = true;
+    this.pouchDrag.startY = touch.clientY; // Record initial touch Y
+  },
+
+  // Handle touch move to compute tilt angle from drag distance
+  handleCanvasTouchMove(e) {
+    if (!this.pouchDrag.active) return;
+    const touch = e.touches[0];
+    const dy    = touch.clientY - this.pouchDrag.startY; // Vertical drag distance
+    // Map drag distance to tilt angle: 100px drag = 45° tilt
+    this.pouchDrag.currentAngle = Math.max(-60, Math.min(60, -dy * 0.45));
+    State.manualOverride = true; // User touched canvas, override sensors
+    State.pourAngle = this.pouchDrag.currentAngle;
+  },
+
+  // Reset pouch drag when touch ends (mobile) or mouse button released (PC)
+  handleCanvasTouchEnd(e) {
+    this.pouchDrag.active = false;
+    this.pouchDrag.currentAngle = 0;
+    State.pourAngle = 0;     // 指を離したら元の直立に戻す
+    State.manualOverride = false; // センサーモードに戻れるようにリセット
+  },
+
+  // PC: マウスボタンを押した瞬間にドラッグ開始位置を記録
+  handleCanvasMouseDown(e) {
+    if (e.button !== 0) return; // 左ボタンのみ
+    this.pouchDrag.active = true;
+    this.pouchDrag.startX = e.clientX; // X方向ドラッグで傾き制御
+  },
+
+  // PC: ドラッグ中のみ角度を変える（e.buttons === 1 = 左ボタン押し続け中）
+  handleCanvasMouseMove(e) {
+    if (!this.pouchDrag.active || e.buttons !== 1) {
+      // ボタンが離れていたらドラッグ終了
+      this.pouchDrag.active = false;
+      return;
+    }
+    const dx = e.clientX - this.pouchDrag.startX; // ドラッグ開始点からの相対移動量
+    State.manualOverride = true;
+    State.pourAngle = Math.max(-60, Math.min(60, dx * 0.5)); // 120px drag = 60°
+  },
+
+  // Set viscosity level and update UI selector buttons
+  setViscosity(level) {
+    State.viscosity = level; // Update state
+    // Update all viscosity button styles
+    [1,2,3].forEach(l => {
+      document.getElementById(`visc-${l}`).classList.toggle('active', l === level);
+    });
+  },
+
+  // Called when player presses pour button
+  startPour() {
+    if (!State.gameRunning) return; // Ignore if game not active
+    State.isPouring = true;
+    State.pourBtnEl.classList.add('pouring'); // Visual feedback
+    AudioManager.startPour(); // Begin pour sound
+    // PC（センサーなし・手動操作なし）の場合は自動で45°に設定して注げるようにする
+    if (!State.sensorsGranted && !State.manualOverride) {
+      State.pourAngle = 45; // センサー不在のPC用デフォルト傾き
+    }
+  },
+
+  // Called when player releases pour button
+  stopPour() {
+    State.isPouring = false;
+    State.pourBtnEl.classList.remove('pouring'); // Reset visual
+    AudioManager.stopPour(); // Stop pour sound
+    // ボタンを離したらPC自動角度をリセット（手動ドラッグ操作は保持しない）
+    if (!State.sensorsGranted) {
+      State.pourAngle = 0;
+      State.manualOverride = false; // 次のhold時に再びauto-45°が効くようにリセット
+    }
+  },
+
+  // Start a new game session - reset all state and begin loop
+  start() {
+    if (State.gameRunning) this.stop(); // Stop any running game first
+
+    // Reset all session variables to initial state
+    State.fillLevel         = 0.0;
+    State.spillCount        = 0;
+    State.hippoAnger        = 0.0;
+    State.surfaceTensionMode= false;
+    State.tensionHoldSeconds= 0;
+    State.tensionHoldStart  = null;
+    State.isPouring         = false;
+    State.waveOffset        = 0;
+    State.particles         = [];
+    State.sessionStart      = Date.now(); // Record start time
+    State.gameRunning       = true;
+
+    HippoManager.reset(); // Reset hippo to calm state
+    VoiceManager.onStart(); // Speak opening instruction
+
+    // Load ghost best time for comparison during play
+    const data = Storage.load();
+    State.ghostBestMs = data.bestTimeMs;
+
+    // Begin the animation loop
+    this.lastFrameTime = performance.now();
+    this.loop(this.lastFrameTime);
+  },
+
+  // Stop the game loop and clean up
+  stop() {
+    State.gameRunning = false;
+    if (State.animFrameId) {
+      cancelAnimationFrame(State.animFrameId); // Stop the loop
+      State.animFrameId = null;
+    }
+    this.stopPour(); // Ensure pour is stopped
+    AudioManager.stopPour();
+    AudioManager.stopTensionAudio();
+  },
+
+  // Main game loop - called every frame via requestAnimationFrame
+  // https://developer.mozilla.org/en-US/docs/Web/API/window/requestAnimationFrame
+  loop(timestamp) {
+    if (!State.gameRunning) return; // Exit if game stopped
+
+    // Calculate time since last frame in ms (delta time for smooth physics)
+    const dt = timestamp - this.lastFrameTime;
+    this.lastFrameTime = timestamp; // Update for next frame
+
+    this.update(dt);   // Update game physics/logic
+    this.render();     // Draw current state to canvas
+
+    // Schedule next frame - store ID for potential cancellation
+    State.animFrameId = requestAnimationFrame((ts) => this.loop(ts));
+  },
+
+  // Update game state for one frame given delta-time dt (ms)
+  update(dt) {
+    // ── Pour physics ────────────────────────────
+    if (State.isPouring) {
+      // Only pour if pouch is tilted enough (> 10° from vertical)
+      const isPouring = Math.abs(State.pourAngle) > 10;
+      if (isPouring) {
+        // Fill rate from viscosity table, modulated by tilt angle
+        const rate = this.FILL_RATES[State.viscosity];
+        // Tilt multiplier: steeper angle = faster pour (capped at 2x)
+        const tiltMult = Math.min(2.0, Math.abs(State.pourAngle) / 30);
+        const fillDelta = rate * dt * tiltMult; // Amount to fill this frame
+
+        if (State.fillLevel + fillDelta >= 1.0) {
+          // Overflow! Bottle is completely full
+          State.fillLevel = 1.0; // Cap at 100%
+          this.handleOverflow(); // Trigger overflow consequence
+        } else {
+          State.fillLevel += fillDelta; // Normal fill
+        }
+
+        // Warn player when approaching overflow
+        if (State.fillLevel > 0.85 && State.fillLevel < 0.92) {
+          VoiceManager.onNearOverflow(); // Throttled by cooldown
+        }
+      }
+    }
+
+    // ── Surface tension mode activation ─────────
+    if (State.fillLevel >= 0.9 && !State.surfaceTensionMode) {
+      this.activateSurfaceTension(); // Enter surface tension challenge
+    }
+
+    // ── Surface tension hold timer ───────────────
+    if (State.surfaceTensionMode) {
+      const tiltOk = Math.abs(State.betaAngle) < 2 && Math.abs(State.gammaAngle) < 2;
+      // OR: if no sensors, check mouse/drag angle
+      const dragOk = !State.sensorsGranted && Math.abs(State.pourAngle) < 5;
+      const isStill = State.sensorsGranted ? tiltOk : dragOk;
+
+      if (isStill) {
+        // Player is holding still - advance hold timer
+        if (!State.tensionHoldStart) {
+          State.tensionHoldStart = Date.now(); // Start counting
+        }
+        const heldMs = Date.now() - State.tensionHoldStart;
+        State.tensionHoldSeconds = heldMs / 1000; // Convert to seconds
+
+        if (State.tensionHoldSeconds >= 4.0) {
+          // Held still for 4 full seconds - VICTORY!
+          this.triggerVictory();
+          return; // Exit update to prevent further processing
+        }
+      } else {
+        // Player moved - reset hold timer
+        if (State.sensorsGranted && Math.abs(State.gammaAngle) > 2) {
+          // Device tilted during surface tension mode = FAILURE
+          State.failureReason = 'TILT VIOLATION';
+          this.triggerFailure();
+          return;
+        }
+        State.tensionHoldStart = null; // Reset timer due to movement
+        State.tensionHoldSeconds = 0;
+      }
+    }
+
+    // ── Ambient voice coaching (tilt feedback) ───
+    if (State.gameRunning && State.sensorsGranted && !State.surfaceTensionMode) {
+      const absTilt = Math.abs(State.gammaAngle);
+      if (State.isPouring && absTilt > 30 && absTilt < 50) {
+        VoiceManager.onGoodTilt(); // Angle is in sweet spot
+      } else if (State.isPouring && (absTilt < 10 || absTilt > 55)) {
+        VoiceManager.onBadTilt(); // Angle needs adjustment
+      }
+    }
+
+    // ── Wave animation offset ─────────────────────
+    State.waveOffset += 0.05; // Advance wave phase each frame
+
+    // ── Update timer display ─────────────────────
+    const elapsed = Date.now() - State.sessionStart;
+    const secs    = Math.floor(elapsed / 1000);
+    const mins    = Math.floor(secs / 60);
+    const ss      = String(secs % 60).padStart(2, '0');
+    const mm      = String(mins).padStart(2, '0');
+    document.getElementById('game-timer').textContent = `${mm}:${ss}`;
+
+    // ── Ghost delta display ──────────────────────
+    if (State.ghostBestMs) {
+      const ghostElapsed = elapsed - State.ghostBestMs; // Positive = behind ghost
+      const ghostSign = ghostElapsed > 0 ? '+' : '';
+      document.getElementById('ghost-delta').textContent = ghostSign + (ghostElapsed/1000).toFixed(1) + 's';
+    }
+
+    // ── Update particle positions ─────────────────
+    State.particles = State.particles.filter(p => p.life > 0); // Remove dead particles
+    State.particles.forEach(p => {
+      p.x    += p.vx;      // Move horizontally
+      p.y    += p.vy;      // Move vertically
+      p.vy   += 0.15;      // Gravity pulls particles down
+      p.life -= 2;         // Reduce lifetime each frame
+      p.vx   *= 0.97;      // Air resistance slows horizontal motion
+    });
+  },
+
+  // Handle overflow (bottle over-filled)
+  handleOverflow() {
+    if (State.surfaceTensionMode) {
+      // Overflow during surface tension = immediate failure
+      State.failureReason = 'OVERFLOW';
+      this.triggerFailure();
+    } else {
+      // Minor overflow: add spill, increase hippo anger
+      State.spillCount++;
+      HippoManager.anger(0.2); // Hippo gets 20% angrier
+      this.stopPour(); // Force stop pouring
+      // Shake the screen
+      const gameScreen = document.getElementById('screen-game');
+      gameScreen.classList.add('shake');
+      setTimeout(() => gameScreen.classList.remove('shake'), 500);
+    }
+  },
+
+  // Activate surface tension challenge mode
+  activateSurfaceTension() {
+    State.surfaceTensionMode = true;
+    State.isPouring  = false;      // Force stop pouring
+    this.stopPour();               // Stop audio/visual pour state
+    AudioManager.stopPour();       // Ensure audio stops
+    AudioManager.startHeartbeat(); // Begin tense heartbeat rhythm
+    AudioManager.startTensionDrone(); // Begin low drone
+    VoiceManager.onSurfaceTension(); // Speak mode announcement
+
+    // Show surface tension alert overlay
+    const alert = document.getElementById('surface-tension-alert');
+    alert.style.display = 'block'; // Make alert visible
+  },
+
+  // Trigger victory sequence
+  triggerVictory() {
+    this.stop(); // Stop the game loop
+    AudioManager.stopTensionAudio(); // Stop tension audio
+    AudioManager.playVictory(); // Play fanfare
+
+    // Hide surface tension alert
+    document.getElementById('surface-tension-alert').style.display = 'none';
+
+    // Calculate session stats
+    const durationMs = Date.now() - State.sessionStart;
+    State.sessionDuration = durationMs;
+
+    // Save session to localStorage
+    const session = {
+      date: new Date().toISOString(),     // ISO date string for display
+      viscosity: State.viscosity,          // Viscosity level used
+      durationMs,                          // How long the session took
+      spillCount: State.spillCount,        // Number of overflow events
+      result: 'WIN',                       // Session outcome
+      spillAreaCm2: State.spillCount * 15, // Rough estimate of spill area
+    };
+    const savedData = Storage.recordSession(session); // Persist and get updated data
+
+    // Update result screen stats
+    const secs  = Math.floor(durationMs / 1000);
+    const mins  = Math.floor(secs / 60);
+    document.getElementById('result-time').textContent   = `${mins}:${String(secs%60).padStart(2,'0')}`;
+    document.getElementById('result-spills').textContent = State.spillCount;
+    document.getElementById('result-rank').textContent   = Storage.getRank(savedData.totalWins);
+
+    // Ghost comparison
+    if (State.ghostBestMs) {
+      const diff = durationMs - State.ghostBestMs;
+      document.getElementById('result-ghost').textContent = (diff > 0 ? '+' : '') + (diff/1000).toFixed(1) + 's';
+    } else {
+      document.getElementById('result-ghost').textContent = 'NEW PB!'; // First win = instant PB
+    }
+
+    App.goScreen('result'); // Navigate to result screen
+    ResultAnimator.start(); // Trigger particle burst animation
+  },
+
+  // Trigger failure sequence
+  triggerFailure() {
+    this.stop(); // Stop the game loop
+    AudioManager.stopTensionAudio(); // Stop tension audio
+    AudioManager.playFailure(); // Play sad chord
+    AudioManager.stopPour();
+
+    // Save loss session
+    const durationMs = Date.now() - State.sessionStart;
+    Storage.recordSession({
+      date: new Date().toISOString(),
+      viscosity: State.viscosity,
+      durationMs,
+      spillCount: State.spillCount,
+      result: 'LOSS',
+      spillAreaCm2: State.spillCount * 15,
+    });
+
+    // Show reason on failure screen
+    document.getElementById('failure-reason').textContent = State.failureReason;
+
+    // Hide surface tension alert
+    document.getElementById('surface-tension-alert').style.display = 'none';
+
+    App.goScreen('failure'); // Navigate to failure screen
+  },
+
+  // Render the current game state to the canvas
+  // All drawing uses Canvas 2D API
+  render() {
+    const { canvas, ctx } = this;
+    const W = canvas.width;  // Canvas width in pixels
+    const H = canvas.height; // Canvas height in pixels
+
+    // ── Clear canvas ──────────────────────────────
+    ctx.fillStyle = '#0a0e0a'; // Dark tactical background
+    ctx.fillRect(0, 0, W, H); // Fill entire canvas
+
+    // ── Draw subtle grid lines (tactical HUD aesthetic) ───
+    ctx.strokeStyle = 'rgba(0,255,153,0.05)'; // Very faint green grid
+    ctx.lineWidth   = 1;
+    const gridSize  = 40; // Grid spacing in pixels
+    for (let x = 0; x < W; x += gridSize) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let y = 0; y < H; y += gridSize) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+
+    // ── Draw bottle ────────────────────────────────
+    this.drawBottle(ctx, W, H);
+
+    // ── Draw pouch ────────────────────────────────
+    this.drawPouch(ctx, W, H);
+
+    // ── Draw mini hippo gauge ─────────────────────
+    this.drawHippoGauge(ctx, W, H);
+
+    // ── Draw surface tension hold timer arc ───────
+    if (State.surfaceTensionMode) {
+      this.drawTensionArc(ctx, W, H);
+    }
+
+    // ── Draw particles ─────────────────────────────
+    State.particles.forEach(p => {
+      ctx.globalAlpha = p.life / 100; // Fade out as life decreases
+      ctx.fillStyle   = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); // Draw circular particle
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1; // Reset global alpha
+  },
+
+  // Draw the refill bottle (center of screen)
+  drawBottle(ctx, W, H) {
+    const cx     = W / 2;         // Bottle center X
+    const bW     = W * 0.22;       // Bottle body width
+    const bH     = H * 0.42;       // Bottle body height
+    const bX     = cx - bW / 2;    // Bottle left edge X
+    const bY     = H * 0.38;       // Bottle top Y (center area)
+    const neckW  = bW * 0.35;      // Neck width
+    const neckH  = bH * 0.12;      // Neck height
+    const neckX  = cx - neckW / 2; // Neck left edge
+
+    // Bottle body: rounded rectangle
+    ctx.save(); // Save context state for potential transforms
+    ctx.beginPath();
+    const radius = bW * 0.18; // Corner radius for bottle shape
+    ctx.moveTo(bX + radius, bY);
+    ctx.lineTo(bX + bW - radius, bY);
+    ctx.quadraticCurveTo(bX + bW, bY, bX + bW, bY + radius);
+    ctx.lineTo(bX + bW, bY + bH - radius);
+    ctx.quadraticCurveTo(bX + bW, bY + bH, bX + bW - radius, bY + bH);
+    ctx.lineTo(bX + radius, bY + bH);
+    ctx.quadraticCurveTo(bX, bY + bH, bX, bY + bH - radius);
+    ctx.lineTo(bX, bY + radius);
+    ctx.quadraticCurveTo(bX, bY, bX + radius, bY);
+    ctx.closePath();
+
+    // Bottle base fill - semi-transparent white/gray for plastic look
+    ctx.fillStyle = 'rgba(180,200,220,0.15)';
+    ctx.fill();
+
+    // Bottle outline
+    ctx.strokeStyle = 'rgba(0,204,255,0.6)'; // Blue tint for plastic
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // ── Draw liquid fill ──────────────────────────
+    const liquidH    = bH * State.fillLevel; // Height of liquid based on fill
+    const liquidTop  = bY + bH - liquidH;    // Y position of liquid surface
+    const liquidBotY = bY + bH;             // Y position of bottle bottom
+
+    if (State.fillLevel > 0.01) {
+      ctx.save();
+      // Clip drawing to bottle shape so liquid doesn't overflow visually
+      ctx.beginPath();
+      ctx.rect(bX + 2, bY + 2, bW - 4, bH - 4); // Inner clip region
+      ctx.clip();
+
+      // Liquid color: pink/purple gradient for shampoo aesthetic
+      const liquidGrad = ctx.createLinearGradient(bX, liquidTop, bX, liquidBotY);
+      if (State.surfaceTensionMode) {
+        // Surface tension mode: vivid warning pink
+        liquidGrad.addColorStop(0, 'rgba(255,50,100,0.8)');
+        liquidGrad.addColorStop(1, 'rgba(200,0,80,0.9)');
+      } else {
+        // Normal fill: shampoo pink
+        liquidGrad.addColorStop(0, 'rgba(255,150,200,0.7)');
+        liquidGrad.addColorStop(1, 'rgba(220,80,150,0.85)');
+      }
+      ctx.fillStyle = liquidGrad;
+
+      // Draw animated wavy top surface of liquid
+      ctx.beginPath();
+      ctx.moveTo(bX, liquidTop);
+      const waveAmp  = liquidH > 5 ? 4 : 1; // Wave amplitude (smaller when nearly empty)
+      const wavePts  = 8; // Number of wave control points
+      for (let i = 0; i <= wavePts; i++) {
+        const wx   = bX + (bW * i / wavePts); // X position of wave point
+        // Sine wave offset creates animated ripple effect
+        const wy   = liquidTop + Math.sin(i * 1.2 + State.waveOffset) * waveAmp;
+        i === 0 ? ctx.moveTo(wx, wy) : ctx.lineTo(wx, wy);
+      }
+      ctx.lineTo(bX + bW, liquidBotY); // Right side down to bottom
+      ctx.lineTo(bX, liquidBotY);      // Bottom left
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore(); // Restore clip region
+    }
+
+    // Bottle neck (above body)
+    ctx.beginPath();
+    ctx.rect(neckX, bY - neckH, neckW, neckH); // Rectangular neck shape
+    ctx.fillStyle = 'rgba(180,200,220,0.12)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,204,255,0.5)';
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
+
+    // Bottle cap (top of neck)
+    ctx.beginPath();
+    ctx.rect(neckX - 4, bY - neckH - 12, neckW + 8, 12); // Cap slightly wider than neck
+    ctx.fillStyle = 'rgba(100,180,220,0.5)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,204,255,0.7)';
+    ctx.stroke();
+
+    // ── Fill percentage text ──────────────────────
+    const pct = Math.round(State.fillLevel * 100);
+    ctx.font      = `bold ${W * 0.06}px 'Orbitron', monospace`;
+    ctx.fillStyle = State.surfaceTensionMode ? '#ff3366' : '#00ff99';
+    ctx.textAlign = 'center';
+    ctx.shadowColor  = State.surfaceTensionMode ? '#ff3366' : '#00ff99';
+    ctx.shadowBlur   = 10;
+    ctx.fillText(`${pct}%`, cx, bY - neckH - 20); // Above the bottle
+    ctx.shadowBlur   = 0; // Reset shadow for next draws
+  },
+
+  // Draw the refill pouch (upper area, tilts based on pour angle)
+  drawPouch(ctx, W, H) {
+    const cx     = W / 2;         // Horizontal center
+    const pouchY = H * 0.12;      // Vertical center of pouch
+    const pouchW = W * 0.30;      // Pouch width
+    const pouchH = H * 0.18;      // Pouch height
+
+    ctx.save(); // Save for rotation transform
+    ctx.translate(cx, pouchY + pouchH / 2); // Pivot around pouch center
+
+    // Rotation from pour angle; clamped to ±70° for visual clarity
+    const rotation = Math.max(-70, Math.min(70, State.pourAngle)) * (Math.PI / 180);
+    ctx.rotate(rotation); // Apply tilt rotation
+
+    // Pouch body - flexible plastic bag shape
+    ctx.beginPath();
+    ctx.moveTo(-pouchW/2, -pouchH/2 + 8);
+    ctx.quadraticCurveTo(-pouchW/2 - 8, 0, -pouchW/2 + 4, pouchH/2);
+    ctx.lineTo(pouchW/2 - 4, pouchH/2);
+    ctx.quadraticCurveTo(pouchW/2 + 8, 0, pouchW/2, -pouchH/2 + 8);
+    ctx.lineTo(pouchW/2 * 0.5, -pouchH/2); // Taper to nozzle
+    ctx.lineTo(-pouchW/2 * 0.5, -pouchH/2);
+    ctx.closePath();
+
+    // Pouch fill - pink gradient matching bottle liquid
+    const pGrad = ctx.createLinearGradient(-pouchW/2, 0, pouchW/2, 0);
+    pGrad.addColorStop(0, 'rgba(255,130,190,0.7)');
+    pGrad.addColorStop(0.5, 'rgba(255,180,220,0.8)');
+    pGrad.addColorStop(1, 'rgba(220,80,150,0.7)');
+    ctx.fillStyle   = pGrad;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,100,180,0.8)';
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+    // Pouch nozzle (spout at bottom when tilted)
+    ctx.beginPath();
+    ctx.rect(-8, -pouchH/2 - 18, 16, 18); // Small rectangular nozzle
+    ctx.fillStyle = 'rgba(180,80,120,0.8)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,100,180,0.6)';
+    ctx.stroke();
+
+    // Pour stream: only show if actively pouring and tilted
+    if (State.isPouring && Math.abs(State.pourAngle) > 10) {
+      const streamLen = H * 0.15; // Stream length
+      ctx.beginPath();
+      ctx.moveTo(0, -pouchH/2 - 18); // Start at nozzle tip
+      // Curved stream simulating liquid flow with gravity
+      ctx.quadraticCurveTo(
+        Math.sin(State.waveOffset) * 4, // Slight horizontal wobble
+        -pouchH/2 - streamLen / 2,
+        0, -pouchH/2 - streamLen  // End point below nozzle
+      );
+      ctx.strokeStyle = 'rgba(255,150,200,0.6)';
+      ctx.lineWidth   = 6;
+      ctx.lineCap     = 'round';
+      ctx.stroke();
+
+      // Thin inner stream highlight
+      ctx.beginPath();
+      ctx.moveTo(0, -pouchH/2 - 18);
+      ctx.quadraticCurveTo(Math.sin(State.waveOffset) * 4, -pouchH/2 - streamLen / 2, 0, -pouchH/2 - streamLen);
+      ctx.strokeStyle = 'rgba(255,220,240,0.8)';
+      ctx.lineWidth   = 2;
+      ctx.stroke();
+    }
+
+    ctx.restore(); // Restore pre-rotation transform
+
+    // ── Tilt angle HUD display (bottom-left) ──────
+    ctx.font      = `${W * 0.04}px 'Orbitron', monospace`;
+    ctx.fillStyle = Math.abs(State.pourAngle) > 10 ? '#00ff99' : 'rgba(0,255,153,0.4)';
+    ctx.textAlign = 'left';
+    ctx.fillText(`TILT: ${State.pourAngle.toFixed(1)}°`, 16, H - 100);
+  },
+
+  // Draw mini Mother Hippo gauge in top-right corner of game screen
+  drawHippoGauge(ctx, W, H) {
+    const cx  = W - 70; // Center X of gauge circle
+    const cy  = H * 0.18; // Center Y
+    const r   = 28;    // Radius of gauge circle
+    const anger = State.hippoAnger; // Current anger 0-1
+
+    // Background circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0,20,10,0.8)';
+    ctx.fill();
+    ctx.strokeStyle = anger > 0.8 ? '#ff0000' : anger > 0.4 ? '#ff8800' : '#00ff99';
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+
+    // Anger fill arc (clockwise from top)
+    if (anger > 0) {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy); // Center point
+      const startAngle = -Math.PI / 2;          // Start at top (12 o'clock)
+      const endAngle   = startAngle + anger * Math.PI * 2; // Sweep proportional to anger
+      ctx.arc(cx, cy, r - 4, startAngle, endAngle);
+      ctx.closePath();
+      // Color shifts from green → orange → red as anger increases
+      ctx.fillStyle = anger > 0.8 ? 'rgba(255,0,0,0.5)'   :
+                      anger > 0.4 ? 'rgba(255,136,0,0.5)' :
+                                    'rgba(0,255,153,0.3)';
+      ctx.fill();
+    }
+
+    // Mini hippo face drawn with primitive shapes
+    ctx.font      = `${r * 1.0}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    // Emoji changes based on anger state
+    const emoji = anger >= 0.9 ? '😈' : anger >= 0.5 ? '😠' : '🦛';
+    ctx.fillText(emoji, cx, cy); // Draw hippo emoji in gauge center
+    ctx.textBaseline = 'alphabetic'; // Reset baseline
+  },
+
+  // Draw surface tension hold progress arc
+  drawTensionArc(ctx, W, H) {
+    const cx   = W / 2;  // Screen center X
+    const cy   = H * 0.85; // Lower area of screen
+    const r    = 50;     // Arc radius
+    const prog = State.tensionHoldSeconds / 4.0; // Progress 0-1 (need 4 seconds)
+
+    // Background arc (full circle outline)
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,51,102,0.2)';
+    ctx.lineWidth   = 8;
+    ctx.stroke();
+
+    // Progress arc fill (clockwise)
+    if (prog > 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + prog * Math.PI * 2);
+      ctx.strokeStyle = '#ff3366'; // Danger red for tension indicator
+      ctx.lineWidth   = 8;
+      ctx.lineCap     = 'round';
+      ctx.stroke();
+    }
+
+    // Countdown text in center
+    const remaining = Math.max(0, 4.0 - State.tensionHoldSeconds).toFixed(1);
+    ctx.font         = `bold ${W * 0.05}px 'Orbitron', monospace`;
+    ctx.fillStyle    = '#ff3366';
+    ctx.textAlign    = 'center';
+    ctx.fillText(remaining + 's', cx, cy + 6); // Show seconds remaining
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 12: FAILURE & SUCCESS HANDLERS
+// Animation and particle effects for end states
+// ═══════════════════════════════════════════════════
+
+const ResultAnimator = {
+  // Canvas and context for result screen particle burst
+  canvas: null,
+  ctx: null,
+  particles: [], // Local particle array for result screen
+  animId: null,  // Animation frame ID for cleanup
+
+  // Start the golden victory particle animation
+  start() {
+    this.canvas = document.getElementById('result-canvas');
+    this.ctx    = this.canvas.getContext('2d');
+    this.particles = [];
+
+    // Create golden burst particles from center
+    for (let i = 0; i < 80; i++) {
+      const angle = (Math.PI * 2 * i) / 80; // Evenly distribute angles
+      const speed = 2 + Math.random() * 5;   // Variable speed for organic feel
+      this.particles.push({
+        x: this.canvas.width  / 2,  // Start at center
+        y: this.canvas.height / 2,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 80 + Math.random() * 40, // Varied lifetimes
+        r:  2 + Math.random() * 4,     // Random sizes
+        // Golden color variations
+        color: `hsl(${40 + Math.random() * 20}, 100%, ${60 + Math.random() * 20}%)`,
+      });
+    }
+
+    this.animLoop(); // Start animation loop
+  },
+
+  // Animation loop for result particles
+  animLoop() {
+    const { canvas, ctx } = this;
+    // Semi-transparent clear creates motion trail effect
+    ctx.fillStyle = 'rgba(10,14,10,0.15)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    this.particles = this.particles.filter(p => p.life > 0); // Remove dead
+
+    this.particles.forEach(p => {
+      ctx.globalAlpha = p.life / 120; // Fade as life decreases
+      ctx.fillStyle   = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Update particle position
+      p.x    += p.vx;
+      p.y    += p.vy;
+      p.vy   += 0.08; // Gentle gravity
+      p.life -= 1.5;
+      p.vx   *= 0.98; // Friction
+    });
+
+    ctx.globalAlpha = 1; // Reset alpha
+
+    if (this.particles.length > 0) {
+      this.animId = requestAnimationFrame(() => this.animLoop()); // Continue if particles remain
+    }
+  },
+
+  // Spawn splash particles at canvas position (x, y) for overflow effect
+  spawnSplash(x, y) {
+    for (let i = 0; i < 20; i++) {
+      const angle = Math.random() * Math.PI * 2; // Random direction
+      const speed = 3 + Math.random() * 8;
+      State.particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 4, // Initial upward bias for splash
+        life: 60 + Math.random() * 40,
+        r:   3 + Math.random() * 5,
+        color: `rgba(255,${100 + Math.random()*100},200,0.9)`, // Pink splash
+      });
+    }
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 13: AR MODE MANAGER
+// Manages the AR screen: camera + sensor + MediaPipe init
+// ═══════════════════════════════════════════════════
+
+const ARManager = {
+  // Called when AR screen becomes active
+  async start() {
+    await CameraManager.start();       // Start camera stream
+    await MediaPipeManager.init();     // Try to load MediaPipe (graceful fail)
+    SensorManager.init();              // Initialize orientation sensors
+  },
+
+  // Called when leaving AR screen
+  stop() {
+    CameraManager.stop(); // Release camera hardware
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 14: UI UPDATES & ANIMATIONS
+// Home screen data refresh and history rendering
+// ═══════════════════════════════════════════════════
+
+const UIManager = {
+  // Refresh home screen with current save data
+  refreshHome() {
+    const data = Storage.load();
+
+    // Update rank display
+    const rank = Storage.getRank(data.totalWins);
+    document.getElementById('home-rank-display').textContent = rank;
+    document.getElementById('home-wins-display').textContent = `${data.totalWins} wins`;
+
+    // Update ghost data display (personal best time)
+    if (data.bestTimeMs) {
+      const secs = Math.floor(data.bestTimeMs / 1000);
+      const mins = Math.floor(secs / 60);
+      document.getElementById('ghost-data-text').textContent =
+        `BEST: ${mins}:${String(secs%60).padStart(2,'0')}`;
+    } else {
+      document.getElementById('ghost-data-text').textContent = 'NO GHOST DATA';
+    }
+
+    // Check days away and show return message if > 30 days
+    const daysAway = Storage.getDaysAway();
+    const returnEl = document.getElementById('return-msg');
+    if (daysAway > 30) {
+      returnEl.textContent = `⚠ ${daysAway}日ぶり！腕は落ちていないか？`; // X days away warning
+      returnEl.style.display = 'block'; // Show the message
+    } else {
+      returnEl.style.display = 'none'; // Hide if recent player
+    }
+
+    // Update hippo expression based on hippo anger (reset to 0 for home)
+    HippoManager.updateExpression(0);
+  },
+
+  // Render history screen with saved sessions
+  refreshHistory() {
+    const data = Storage.load();
+
+    // Update summary stats
+    document.getElementById('hist-wins').textContent  = data.totalWins;
+    document.getElementById('hist-rank').textContent  = Storage.getRank(data.totalWins);
+    document.getElementById('hist-total').textContent = data.sessions.length;
+
+    // Best time display
+    if (data.bestTimeMs) {
+      const s = Math.floor(data.bestTimeMs / 1000);
+      document.getElementById('hist-best').textContent = `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+    } else {
+      document.getElementById('hist-best').textContent = '--';
+    }
+
+    // Render session list (most recent first)
+    const listEl = document.getElementById('history-list');
+    listEl.innerHTML = ''; // Clear existing entries
+
+    // Take last 20 sessions and display in reverse chronological order
+    [...data.sessions].reverse().slice(0, 20).forEach(session => {
+      const div = document.createElement('div');
+      div.className = 'history-entry';
+
+      const date = new Date(session.date);
+      const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+      const durSec  = Math.floor(session.durationMs / 1000);
+      const durStr  = `${Math.floor(durSec/60)}:${String(durSec%60).padStart(2,'0')}`;
+
+      // Viscosity name lookup
+      const viscNames = {1:'TONER', 2:'SOAP', 3:'COND.'};
+      const viscStr   = viscNames[session.viscosity] || 'UNKNOWN';
+
+      div.innerHTML = `
+        <div>
+          <div class="entry-date">${dateStr}</div>
+          <div style="font-size:10px;color:rgba(0,255,153,0.5)">${viscStr} | ${durStr}</div>
+        </div>
+        <div class="entry-result ${session.result === 'WIN' ? 'win' : 'loss'}">
+          ${session.result === 'WIN' ? '✓ WIN' : '✗ LOSS'}
+        </div>`;
+      listEl.appendChild(div); // Add entry to list
+    });
+
+    if (data.sessions.length === 0) {
+      listEl.innerHTML = '<div style="color:rgba(0,255,153,0.4);text-align:center;font-size:12px;padding:20px">NO SESSIONS YET</div>';
+    }
+  },
+};
+
+// ═══════════════════════════════════════════════════
+// SECTION 15: APP INITIALIZATION
+// Entry point and screen routing logic
+// ═══════════════════════════════════════════════════
+
+const App = {
+  // Initialize the entire application
+  init() {
+    ScreenManager.init(); // Set up screen element map
+    GameEngine.init();    // Set up canvas and input listeners
+
+    UIManager.refreshHome(); // Populate home screen with saved data
+
+    // Show home screen on load
+    ScreenManager.show('home');
+  },
+
+  // Navigate to a named screen with appropriate setup/teardown
+  goScreen(name) {
+    const prev = State.currentScreen; // Remember where we came from
+
+    // ── Teardown for leaving screens ──────────────
+    if (prev === 'ar')   ARManager.stop();   // Release camera on AR exit
+    if (prev === 'game') GameEngine.stop();  // Stop game loop on game exit
+
+    // ── Setup for entering screens ────────────────
+    if (name === 'ar') {
+      ARManager.start(); // Start camera and sensors
+    }
+
+    if (name === 'game') {
+      // Reset surface tension alert visibility
+      document.getElementById('surface-tension-alert').style.display = 'none';
+      GameEngine.start(); // Start new game session
+    }
+
+    if (name === 'home') {
+      UIManager.refreshHome(); // Refresh rank/ghost data
+    }
+
+    if (name === 'history') {
+      UIManager.refreshHistory(); // Populate session list
+    }
+
+    if (name === 'result') {
+      // Add golden glow class to result screen for backlight effect
+      document.getElementById('screen-result').classList.add('golden-glow');
+    } else {
+      // Remove golden glow when leaving result screen
+      document.getElementById('screen-result').classList.remove('golden-glow');
+    }
+
+    ScreenManager.show(name); // Switch to new screen
+  },
+};
+
+// ── Bootstrap: start the app once DOM is fully loaded ──
+// https://developer.mozilla.org/en-US/docs/Web/API/Document/DOMContentLoaded_event
+document.addEventListener('DOMContentLoaded', () => {
+  App.init(); // Initialize everything
+});
+
+// Expose key objects globally for inline onclick handlers in HTML
+// (These are called from button onclick attributes above)
+window.App          = App;
+window.GameEngine   = GameEngine;
+window.SensorManager = SensorManager;
+
+</script>
+</body>
+</html>
