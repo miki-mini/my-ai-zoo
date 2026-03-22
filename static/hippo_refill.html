@@ -456,40 +456,9 @@
   <div id="home-title">TACTICAL REFILL SYSTEM v3.1</div>
   <div id="home-subtitle">極めろ！表面張力！<br>〜詰め替え無双〜</div>
 
-  <!-- Mother Hippo mascot SVG - inline for state transitions -->
+  <!-- Mother Hippo mascot target image -->
   <div id="hippo-container">
-    <svg id="hippo-home-svg" class="hippo-svg" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-      <!-- Body -->
-      <ellipse class="hippo-body" cx="100" cy="140" rx="70" ry="55" fill="#7a7a8a"/>
-      <!-- Head -->
-      <ellipse class="hippo-face" cx="100" cy="80" rx="55" ry="50" fill="#8a8a9a"/>
-      <!-- Ears -->
-      <circle cx="52" cy="48" r="14" fill="#7a7a8a"/>
-      <circle cx="52" cy="48" r="8"  fill="#c8a0a0"/>
-      <circle cx="148" cy="48" r="14" fill="#7a7a8a"/>
-      <circle cx="148" cy="48" r="8"  fill="#c8a0a0"/>
-      <!-- Snout -->
-      <ellipse cx="100" cy="98" rx="32" ry="22" fill="#aaaaaa"/>
-      <circle cx="89"  cy="95" r="6" fill="#555"/>
-      <circle cx="111" cy="95" r="6" fill="#555"/>
-      <!-- Eyes -->
-      <ellipse class="hippo-eye-left"  cx="80"  cy="68" rx="10" ry="11" fill="#333"/>
-      <ellipse class="hippo-eye-right" cx="120" cy="68" rx="10" ry="11" fill="#333"/>
-      <circle cx="83"  cy="65" r="3" fill="white"/>
-      <circle cx="123" cy="65" r="3" fill="white"/>
-      <!-- Glasses frames -->
-      <rect class="hippo-glasses" x="65"  y="58" width="26" height="20" rx="6" fill="none" stroke="#333" stroke-width="2.5"/>
-      <rect class="hippo-glasses" x="107" y="58" width="26" height="20" rx="6" fill="none" stroke="#333" stroke-width="2.5"/>
-      <line x1="91" y1="68" x2="107" y2="68" stroke="#333" stroke-width="2.5"/>
-      <!-- Brows (normal = stern flat) -->
-      <line class="hippo-brow-left"  x1="67"  y1="55" x2="89"  y2="55" stroke="#555" stroke-width="3" stroke-linecap="round"/>
-      <line class="hippo-brow-right" x1="109" y1="55" x2="131" y2="55" stroke="#555" stroke-width="3" stroke-linecap="round"/>
-      <!-- Mouth - default stern flat line -->
-      <path class="hippo-mouth" d="M82 112 Q100 115 118 112" stroke="#555" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-      <!-- Fangs for demon state (hidden by default via opacity) -->
-      <path class="hippo-fang-left"  d="M86 114 L82 126 L90 114" fill="white" opacity="0"/>
-      <path class="hippo-fang-right" d="M114 114 L118 126 L110 114" fill="white" opacity="0"/>
-    </svg>
+    <img id="hippo-home-svg" src="images/kaba.png" alt="Okan Hippo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 8px;">
   </div>
 
   <div id="return-msg">⚠ X日ぶり！腕は落ちていないか？</div>
@@ -1358,6 +1327,8 @@ const HippoManager = {
 
     // Remove all state classes before re-applying correct one
     svg.classList.remove('hippo-warning', 'hippo-demon');
+
+    if (svg.tagName.toLowerCase() !== 'svg') return; // Safeguard if swapped to image
 
     if (anger >= 0.9) {
       // DEMON STATE: Red eyes, fangs visible, red tint
