@@ -13,26 +13,28 @@
        Palette: Deep Sapphire × Imperial Purple × Warm Sunlit Gold
     ================================================================ */
     :root {
-      --bg-void:        #1A0B2E;
-      --bg-deep:        #230F3D;
-      --bg-card:        #2B134D;
-      --bg-input:       #371861;
-      --border:         #512985;
-      --border-glow:    #7E41C4;
-      --sapphire:       #1A56DB;
+      --bg-void:        #F4F1ED; /* Whitish gray, Siamese body */
+      --bg-deep:        #EAE5DF;
+      --bg-card:        #FFFFFF;
+      --bg-input:       #F9F8F6;
+      --border:         #D6D1CA;
+      --border-glow:    #B1ACA6;
+      --sapphire:       #1A56DB; /* Eye color */
       --sapphire-mid:   #2563EB;
       --sapphire-light: #60A5FA;
-      --purple:         #7C3AED;
-      --purple-light:   #A78BFA;
+      --purple:         #341258; /* Siamese seal point purple */
+      --purple-light:   #622D9E;
       --gold:           #D97706;
       --gold-mid:       #F59E0B;
       --gold-light:     #FCD34D;
       --red:            #EF4444;
       --red-light:      #FCA5A5;
-      --white:          #F8FAFC;
-      --silver:         #94A3B8;
-      --muted:          #475569;
-      --dim:            #334155;
+      
+      --white:          #2B2625; /* Dark seal brown text */
+      --text-inv:       #FFFFFF; /* White for inverse text */
+      --silver:         #4A4341;
+      --muted:          #69605E;
+      --dim:            #8F8582;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -147,7 +149,7 @@
     .btn-primary {
       background: linear-gradient(135deg, var(--sapphire) 0%, var(--purple) 100%);
       border-color: transparent;
-      color: var(--white);
+      color: var(--text-inv);
       padding: 12px 28px;
       font-size: 13px;
       border-radius: 10px;
