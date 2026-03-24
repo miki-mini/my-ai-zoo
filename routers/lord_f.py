@@ -145,7 +145,7 @@ async def create_post(req: PostRequest):
         model    = get_model()
         response = model.generate_content(
             prompt,
-            generation_config={"temperature": 0.85, "max_output_tokens": 512}
+            generation_config={"temperature": 0.85, "max_output_tokens": 2048}
         )
         reply = response.text.strip()
 
