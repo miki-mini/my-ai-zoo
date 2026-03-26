@@ -480,7 +480,7 @@
 
   <!-- Mode selection buttons -->
   <div class="mode-grid">
-    <button class="btn blue" onclick="App.goScreen('game')"><span>🎮 TRAINING</span></button>
+    <button class="btn blue" onclick="App.startGame()"><span>🎮 TRAINING</span></button>
     <button class="btn amber" onclick="App.goScreen('ar')"><span>📷 AR MODE</span></button>
   </div>
   <button class="btn" onclick="App.goScreen('history')" style="width:100%"><span>📊 HISTORY</span></button>
@@ -524,7 +524,7 @@
   </button>
 
   <!-- Start game session button -->
-  <button id="ar-engage-btn" class="btn danger" onclick="App.goScreen('game')">
+  <button id="ar-engage-btn" class="btn danger" onclick="App.startGame()">
     <span>⚡ ENGAGE</span>
   </button>
 </div>
@@ -588,7 +588,7 @@
       <div><div class="hud-label">GHOST</div><div class="hud-value" id="result-ghost" style="font-size:16px; color:var(--blue)">--</div></div>
     </div>
   </div>
-  <button class="btn amber" onclick="App.goScreen('game')" style="width:100%"><span>▶ PLAY AGAIN</span></button>
+  <button class="btn amber" onclick="App.startGame()" style="width:100%"><span>▶ PLAY AGAIN</span></button>
   <button class="btn" onclick="App.goScreen('home')" style="width:100%"><span>🏠 HOME</span></button>
 </div>
 
@@ -604,7 +604,7 @@
     <div style="color:#A0896B;font-size:11px;letter-spacing:2px">CAUSE OF FAILURE</div>
     <div id="failure-reason" style="font-family:'Orbitron',monospace;font-size:14px;color:#cc6633;margin-top:4px">OVERFLOW</div>
   </div>
-  <button class="btn danger" onclick="App.goScreen('game')" style="width:100%"><span>↺ RETRY</span></button>
+  <button class="btn danger" onclick="App.startGame()" style="width:100%"><span>↺ RETRY</span></button>
   <button class="btn" onclick="App.goScreen('home')" style="width:100%;border-color:#8B4513;color:#8B4513"><span>🏠 HOME</span></button>
 </div>
 
@@ -2299,6 +2299,20 @@ const UIManager = {
 // ═══════════════════════════════════════════════════
 
 const App = {
+  // Request sensor permissions before starting game on mobile
+  async startGame() {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      try {
+        const p = await DeviceOrientationEvent.requestPermission();
+        if (p === 'granted') SensorManager.startListening();
+      } catch(e) { console.warn('Sensor permission cancelled/failed', e); }
+    } else {
+      const isMobile = /Phone|iPad|iPod|Android|Mobi/i.test(navigator.userAgent);
+      if (isMobile) SensorManager.startListening();
+    }
+    App.goScreen('game');
+  },
+
   // Initialize the entire application
   init() {
     ScreenManager.init(); // Set up screen element map
