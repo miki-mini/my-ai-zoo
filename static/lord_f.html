@@ -978,7 +978,10 @@ function openScan() {
     input.removeEventListener('keydown', STATE.scan.keyHandler);
   }
   STATE.scan.keyHandler = () => {
-    if (!STATE.scan.firstKeystrokeAt) STATE.scan.firstKeystrokeAt = Date.now();
+    if (!STATE.scan.firstKeystrokeAt) {
+      STATE.scan.firstKeystrokeAt = Date.now();
+      clearInterval(STATE.scan.intervalId);
+    }
   };
   input.addEventListener('keydown', STATE.scan.keyHandler);
 
