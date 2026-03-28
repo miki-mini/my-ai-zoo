@@ -30,7 +30,7 @@ Python と Google Gemini API を活用した、多機能なLINEボットたち�
 | <img src="images/wolf.jpg" width="40"> | **独り言シャドーイング Wolf🐺**<br>(Wolf Shadowing)<br>![WebApp](https://img.shields.io/badge/WEBアプリ！-darkblue) | **英語学習 & 遠吠え**<br>日本語の独り言をCoolな英語に変換し、AIと一緒に遠吠えシャドーイング。 | [🔍 HTML](../static/wolf.html)<br>[📜 説明書](wolf.md)<br> |
 | <span style="font-size: 30px">🐾</span> | **モモンガドラキュラの生存記録🐾**<br>(Sugar Glider Dracula)<br>![WebApp](https://img.shields.io/badge/WEBアプリ！-purple) | **ライフログ & ゲーム**<br>太陽を避けて装備を整え、称号を手に入れよう。 | [🔍 HTML](../static/dracula.html)<br>[📜 説明書](dracula.md)<br> |
 | <span style="font-size: 30px">🐼</span> | **きのたけ聖戦 レッサーパンダ🐼**<br>(Kinotae Seisen)<br>![WebApp](https://img.shields.io/badge/WEBアプリ！-red) | **コミュニティ投票ゲーム**<br>たけのこ派 vs きのこ派の票を競わせる改行バトル。 | [🔍 HTML](/kinotake)<br>[📜 説明書](LESSER_PANDA.md)<br>[📘 Zenn](https://zenn.dev/miki_mini/articles/1f274766d4cc6f) |
-| <span style="font-size: 30px">🐈</span> | **高貴なCEOシャム猫🐈**<br>(Lord F)<br>![WebApp](https://img.shields.io/badge/WEBアプリ！-purple) | **1人用SNS**<br>高貴なCEOシャム猫が労う、陰キャ専用1人用SNS。 | [🔍 HTML](../static/lord_f.html)<br> |
+| <span style="font-size: 30px">🐈</span> | **高貴なCEOシャム猫🐈**<br>(Lord F)<br>![WebApp](https://img.shields.io/badge/WEBアプリ！-purple) | **1人用SNS**<br>高貴なCEOシャム猫が労う、陰キャ専用1人用SNS。 | [🔍 HTML](../static/lord_f.html)<br>[📜 説明書](lord_f.md)<br> |
 
 ## 🛠 全体で使用している技術
 

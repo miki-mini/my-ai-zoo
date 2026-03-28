@@ -308,15 +308,24 @@ async def evaluate_lapras(req: LaprasEvalRequest):
             
         # Fetch from LAPRAS API
         try:
-            # Strip JSON format URL parameters if any maliciously passed
             clean_id = lapras_id.strip()
+            # ユーザーが間違えてURL全体をコピペした時の対策
+            if "lapras.com/public/" in clean_id:
+                clean_id = clean_id.split("lapras.com/public/")[-1]
+            clean_id = clean_id.replace(".json", "").strip("/")
+            
+            if not clean_id:
+                return {"success": False, "error": "無効なLAPRAS IDです"}
+                
             url = f"https://lapras.com/public/{clean_id}.json"
-            req_obj = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            req_obj = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (compatible; LordFBot/1.0)'})
             with urllib.request.urlopen(req_obj) as response:
                 lapras_data = json.loads(response.read())
         except Exception as e:
             print(f"⚠️ [LordF] LAPRAS API Error: {e}")
-            return {"success": False, "error": "LAPRAS_API_FAILED"}
+            if hasattr(e, 'code') and getattr(e, 'code') == 404:
+                return {"success": False, "error": f"LAPRAS上でID「{clean_id}」が見つかりませんでした。Public設定になっているか確認してください。"}
+            return {"success": False, "error": f"取得失敗: {str(e)}"}
             
         e_score = float(lapras_data.get("e_score", 0.0))
         prev_score = float(data.get("lapras_score", 0.0))
