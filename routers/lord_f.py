@@ -9,6 +9,9 @@ from pydantic import BaseModel
 from datetime import datetime
 import uuid
 from google.cloud import firestore
+import urllib.request
+import json
+from typing import Optional
 from vertexai.generative_models import (
     GenerativeModel, SafetySetting, HarmCategory, HarmBlockThreshold
 )
@@ -130,6 +133,10 @@ class IntrovertUpdateRequest(BaseModel):
     user_id: str
     response_time_seconds: float
     question: str = "What is your favorite food?"
+
+class LaprasEvalRequest(BaseModel):
+    user_id: str
+    lapras_id: Optional[str] = None
 
 
 # ─────────────────────────────────────
@@ -272,3 +279,92 @@ async def update_introvert(req: IntrovertUpdateRequest):
             print(f"⚠️ [LordF] Introvert Update Error: {e}")
 
     return {"success": True, "introvert_level": level, "label": label, "lord_f_message": msg}
+
+# ─────────────────────────────────────
+# POST /api/lord-f/lapras-eval
+# Doc: https://github.com/lapras-inc/public-api-schema
+# Why: Fetches user's e_score from LAPRAS public API
+# ─────────────────────────────────────
+@router.post("/lapras-eval")
+async def evaluate_lapras(req: LaprasEvalRequest):
+    db = get_db()
+    if not db:
+        return {"success": False, "error": "DB_ERROR"}
+    
+    try:
+        user_ref = db.collection("lord_f_users").document(req.user_id)
+        doc = user_ref.get()
+        if not doc.exists:
+            # If standard profile hasn't been created, make one
+            user_ref.set({"user_id": req.user_id, "introvert_level": 0, "post_count": 0, "created_at": firestore.SERVER_TIMESTAMP}, merge=True)
+            data = {}
+        else:
+            data = doc.to_dict()
+            
+        lapras_id = req.lapras_id or data.get("lapras_id")
+        
+        if not lapras_id:
+            return {"success": False, "error": "NO_LAPRAS_ID"}
+            
+        # Fetch from LAPRAS API
+        try:
+            # Strip JSON format URL parameters if any maliciously passed
+            clean_id = lapras_id.strip()
+            url = f"https://lapras.com/public/{clean_id}.json"
+            req_obj = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req_obj) as response:
+                lapras_data = json.loads(response.read())
+        except Exception as e:
+            print(f"⚠️ [LordF] LAPRAS API Error: {e}")
+            return {"success": False, "error": "LAPRAS_API_FAILED"}
+            
+        e_score = float(lapras_data.get("e_score", 0.0))
+        prev_score = float(data.get("lapras_score", 0.0))
+        
+        # Calculate Title based on score
+        if e_score >= 3.5:
+            title = "CEO側近"
+        elif e_score >= 3.0:
+            title = "精鋭部隊長"
+        elif e_score >= 2.5:
+            title = "第一部隊員"
+        else:
+            title = "一般兵"
+            
+        # Generate CEO Message
+        if prev_score > 0 and e_score > prev_score:
+            msg = f"……ほう。LAPRASスコアが {e_score} になりましたか。少しは成長したようですね。"
+        elif prev_score == 0:
+            msg = f"ほう、LAPRASスコアは {e_score} ですか。今日から貴様を『{title}』と呼びましょう。私のために励みたまえ。"
+        else:
+            msg = f"LAPRASスコア {e_score}……特に成長は見られませんね。私の側近になりたくはないのですか？"
+            
+        # Save to user profile
+        user_ref.set({
+            "lapras_id": lapras_id,
+            "lapras_score": e_score,
+            "lapras_title": title,
+            "last_lapras_eval": firestore.SERVER_TIMESTAMP
+        }, merge=True)
+        
+        # Save message as a post from CEO
+        post_id = str(uuid.uuid4())
+        user_ref.collection("posts").document(post_id).set({
+            "post_id": post_id,
+            "content": "CEOのLAPRAS査定を受けました。",
+            "timestamp": firestore.SERVER_TIMESTAMP,
+            "tsundere": False,
+            "lord_f_reply": msg,
+        })
+        user_ref.set({"post_count": firestore.Increment(1)}, merge=True)
+        
+        return {
+            "success": True, 
+            "e_score": e_score, 
+            "title": title, 
+            "lapras_id": lapras_id,
+            "message": msg
+        }
+    except Exception as e:
+        print(f"❌ [LordF] Eval Error: {e}")
+        return {"success": False, "error": str(e)}

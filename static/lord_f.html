@@ -575,9 +575,44 @@
       <button class="btn btn-ghost" onclick="closeScan()">キャンセル</button>
       <button class="btn btn-scan" id="scanSubmitBtn" onclick="submitScan()">CEO シャム猫 に提出 決定 →</button>
     </div>
-  </div>
+</div>
 </div>
 
+<!-- ═══════════════════════════════════
+     LAPRAS EVAL MODAL
+═══════════════════════════════════ -->
+<div id="laprasModal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-title">💼 CEO 人事査定 (LAPRAS)</div>
+    <p class="modal-subtitle">
+      あなたのLAPRAS公開ポートフォリオIDを入力しなさい。<br>
+      CEO シャム猫が直接あなたの戦闘力（e_score）を査定し、相応の役職を与えましょう。
+    </p>
+
+    <div id="laprasResult" class="scan-result">
+      <div class="scan-result-level" id="laprasResultTitle"></div>
+      <div class="scan-result-msg"   id="laprasResultMsg"></div>
+    </div>
+
+    <div class="scan-question-box" style="text-align: left; padding: 16px;">
+      <div class="scan-q-label">LAPRAS Public ID</div>
+      <p style="font-size: 11px; color: var(--dim); margin-bottom: 8px;">例: https://lapras.com/public/<strong>miki-mini</strong> の太字部分</p>
+      <input
+        type="text"
+        id="laprasInput"
+        class="scan-input"
+        placeholder="IDを入力..."
+        autocomplete="off"
+        style="margin-bottom: 0;"
+      />
+    </div>
+
+    <div class="scan-footer">
+      <button class="btn btn-ghost" onclick="closeLaprasModal()">キャンセル</button>
+      <button class="btn btn-primary" id="laprasSubmitBtn" onclick="submitLaprasEval()">査定を受ける →</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════════════════
      MAIN APP
@@ -596,6 +631,11 @@
         <span id="levelText">未測定 — スキャンを実行</span>
       </div>
       <button class="btn btn-scan" onclick="openScan()">⚡ 陰キャ戦闘力スキャン</button>
+      <div id="laprasBadge" class="level-badge" style="background: rgba(26,86,219,0.15); border-color: var(--sapphire-mid); color: var(--sapphire-light); display: none; box-shadow: 0 0 16px rgba(26,86,219,0.15);">
+        <span>🏆</span>
+        <span id="laprasTitleText">未査定</span>
+      </div>
+      <button class="btn btn-ghost" id="laprasEvalBtn" onclick="openLaprasModal()" style="font-size: 11px; padding: 6px 12px;">💼 CEO査定</button>
     </div>
   </header>
 
@@ -677,7 +717,10 @@ const STATE = {
     firstKeystrokeAt: null,  // ms timestamp of user's first keypress
     intervalId:       null,
     keyHandler:       null,  // ref for cleanup
-  }
+  },
+  laprasId:      null,
+  laprasScore:   0.0,
+  laprasTitle:   ''
 };
 
 // ─────────────────────────────────────
@@ -726,7 +769,11 @@ async function loadProfile() {
       STATE.introvertLevel = data.introvert_level || 0;
       STATE.introvertLabel = data.introvert_label || levelLabel(STATE.introvertLevel);
       STATE.postCount      = data.post_count || 0;
+      STATE.laprasId       = data.lapras_id || null;
+      STATE.laprasScore    = data.lapras_score || 0.0;
+      STATE.laprasTitle    = data.lapras_title || '';
       renderLevelBadge();
+      renderLaprasBadge();
       document.getElementById('postCountStat').textContent = STATE.postCount;
     }
   } catch (e) { console.warn('[LordF] Profile load failed:', e); }
@@ -1045,6 +1092,98 @@ async function submitScan() {
 document.getElementById('scanModal').addEventListener('click', function(e) {
   if (e.target === this) closeScan();
 });
+
+// ─────────────────────────────────────
+// LAPRAS EVALUATION
+// ─────────────────────────────────────
+function renderLaprasBadge() {
+  const badge = document.getElementById('laprasBadge');
+  const titleText = document.getElementById('laprasTitleText');
+  if (STATE.laprasTitle) {
+    badge.style.display = 'inline-flex';
+    titleText.textContent = STATE.laprasTitle;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openLaprasModal() {
+  const modal = document.getElementById('laprasModal');
+  const result = document.getElementById('laprasResult');
+  const submitBtn = document.getElementById('laprasSubmitBtn');
+  
+  result.classList.remove('visible');
+  submitBtn.disabled = false;
+  submitBtn.textContent = '査定を受ける →';
+  submitBtn.onclick = submitLaprasEval;
+  
+  if (STATE.laprasId) {
+    document.getElementById('laprasInput').value = STATE.laprasId;
+  }
+  
+  modal.classList.add('open');
+}
+
+function closeLaprasModal() {
+  document.getElementById('laprasModal').classList.remove('open');
+}
+
+async function submitLaprasEval() {
+  const input = document.getElementById('laprasInput');
+  const laprasId = input.value.trim();
+  if (!laprasId) {
+    alert("LAPRAS IDを入力してください。");
+    return;
+  }
+
+  const submitBtn = document.getElementById('laprasSubmitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'CEO が査定中...';
+
+  try {
+    const res = await fetch('/api/lord-f/lapras-eval', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: STATE.userId, lapras_id: laprasId }),
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      STATE.laprasId = data.lapras_id;
+      STATE.laprasScore = data.e_score;
+      STATE.laprasTitle = data.title;
+      renderLaprasBadge();
+
+      document.getElementById('laprasResultTitle').textContent = `e_score: ${data.e_score} ➔ 『${data.title}』`;
+      document.getElementById('laprasResultMsg').textContent = data.message;
+      document.getElementById('laprasResult').classList.add('visible');
+
+      // Reload timeline to show the CEO's assessment post
+      loadTimeline();
+      
+      // Update overall post count locally
+      STATE.postCount++;
+      document.getElementById('postCountStat').textContent = STATE.postCount;
+
+      submitBtn.textContent = '閉じる';
+      submitBtn.disabled = false;
+      submitBtn.onclick = closeLaprasModal;
+    } else {
+      alert("査定エラー: " + (data.error || "通信失敗"));
+      submitBtn.disabled = false;
+      submitBtn.textContent = '査定を受ける →';
+    }
+  } catch (e) {
+    console.error('[LordF] Lapras submit failed:', e);
+    submitBtn.disabled = false;
+    submitBtn.textContent = '通信失敗';
+  }
+}
+
+document.getElementById('laprasModal').addEventListener('click', function(e) {
+  if (e.target === this) closeLaprasModal();
+});
+
 
 // ─────────────────────────────────────
 // UTILITIES
