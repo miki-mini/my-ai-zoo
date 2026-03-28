@@ -962,8 +962,7 @@ function openScan() {
   modal.classList.add('open');
 
   // Timer display
-  // Doc: https://developer.mozilla.org/en-US/docs/Web/API/setInterval
-  // Why: 100ms interval gives 0.1s display precision without burning CPU
+  if (STATE.scan.intervalId) clearInterval(STATE.scan.intervalId);
   STATE.scan.intervalId = setInterval(() => {
     if (!STATE.scan.questionShownAt) return;
     const secs = (Date.now() - STATE.scan.questionShownAt) / 1000;
@@ -971,11 +970,10 @@ function openScan() {
     timer.textContent = secs.toFixed(1) + 's';
   }, 100);
 
-  // Capture first keystroke — record exactly once
-  // Doc: https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#once
-  // Why: { once: true } auto-removes the listener after first fire — no manual cleanup needed
+  // Capture first keystroke
   if (STATE.scan.keyHandler) {
     input.removeEventListener('keydown', STATE.scan.keyHandler);
+    input.removeEventListener('input', STATE.scan.keyHandler);
   }
   STATE.scan.keyHandler = () => {
     if (!STATE.scan.firstKeystrokeAt) {
@@ -984,6 +982,7 @@ function openScan() {
     }
   };
   input.addEventListener('keydown', STATE.scan.keyHandler);
+  input.addEventListener('input', STATE.scan.keyHandler);
 
   setTimeout(() => input.focus(), 300);
 }
@@ -993,6 +992,7 @@ function closeScan() {
   const input = document.getElementById('scanInput');
   if (STATE.scan.keyHandler) {
     input.removeEventListener('keydown', STATE.scan.keyHandler);
+    input.removeEventListener('input', STATE.scan.keyHandler);
     STATE.scan.keyHandler = null;
   }
   document.getElementById('scanModal').classList.remove('open');
