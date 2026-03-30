@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from datetime import datetime
 import uuid
 from google.cloud import firestore
-import urllib.request
+import httpx
 import json
 from typing import Optional
 from vertexai.generative_models import (
@@ -41,10 +41,10 @@ def get_db():
 # ─────────────────────────────────────
 def get_model():
     safety = [
-        SafetySetting(category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,       threshold=HarmBlockThreshold.BLOCK_NONE),
-        SafetySetting(category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,  threshold=HarmBlockThreshold.BLOCK_NONE),
-        SafetySetting(category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,  threshold=HarmBlockThreshold.BLOCK_NONE),
-        SafetySetting(category=HarmCategory.HARM_CATEGORY_HARASSMENT,         threshold=HarmBlockThreshold.BLOCK_NONE),
+        SafetySetting(category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,       threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH),
+        SafetySetting(category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,  threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH),
+        SafetySetting(category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,  threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH),
+        SafetySetting(category=HarmCategory.HARM_CATEGORY_HARASSMENT,         threshold=HarmBlockThreshold.BLOCK_ONLY_HIGH),
     ]
     return GenerativeModel("gemini-2.5-flash", safety_settings=safety)
 
@@ -318,13 +318,17 @@ async def evaluate_lapras(req: LaprasEvalRequest):
                 return {"success": False, "error": "無効なLAPRAS IDです"}
                 
             url = f"https://lapras.com/public/{clean_id}.json"
-            req_obj = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (compatible; LordFBot/1.0)'})
-            with urllib.request.urlopen(req_obj) as response:
-                lapras_data = json.loads(response.read())
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url, headers={'User-Agent': 'Mozilla/5.0 (compatible; LordFBot/1.0)'})
+                response.raise_for_status()
+                lapras_data = response.json()
+                
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                return {"success": False, "error": f"LAPRAS上でID「{clean_id}」が見つかりませんでした。Public設定になっているか確認してください。"}
+            return {"success": False, "error": f"取得失敗: HTTP {e.response.status_code}"}
         except Exception as e:
             print(f"⚠️ [LordF] LAPRAS API Error: {e}")
-            if hasattr(e, 'code') and getattr(e, 'code') == 404:
-                return {"success": False, "error": f"LAPRAS上でID「{clean_id}」が見つかりませんでした。Public設定になっているか確認してください。"}
             return {"success": False, "error": f"取得失敗: {str(e)}"}
             
         e_score = float(lapras_data.get("e_score", 0.0))
