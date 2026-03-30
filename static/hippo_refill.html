@@ -1638,13 +1638,7 @@ const GameEngine = {
           return; // Exit update to prevent further processing
         }
       } else {
-        // Player moved - reset hold timer
-        if (State.sensorsGranted && Math.abs(State.gammaAngle) > 2) {
-          // Device tilted during surface tension mode = FAILURE
-          State.failureReason = 'TILT VIOLATION';
-          this.triggerFailure();
-          return;
-        }
+        // Player moved or not upright - reset hold timer
         State.tensionHoldStart = null; // Reset timer due to movement
         State.tensionHoldSeconds = 0;
       }
