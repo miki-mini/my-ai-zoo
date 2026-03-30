@@ -94,11 +94,11 @@ graph TD
 | <img src="animals/images/butterfly.png" width="40"> | **美の蝶々パーソナル🦋**<br>[(Butterfly)](animals/butterfly.md) | **パーソナルカラー & 顔タイプ**<br>AIが似合うシーズンカラーと顔型に合う髪型を診断。 | `Gemini 2.5` `FastAPI` |
 | <img src="animals/images/squirrel.png" width="40"> | **リスのほっぺたどんぐりゲーム🐿️**<br>[(Squirrel)](animals/squirrel.md) | **対戦アクションゲーム**<br>カメラで手を認識し、落ちてくるどんぐりをキャッチしてほっぺたを膨らませる2人対戦ゲーム。 | `MediaPipe Hands` `Canvas` `Web Audio` |
 | <img src="animals/images/fish.jpg" width="40"> | **カラフルお魚のお部屋水族館🐠**<br>[(Fish)](animals/fish.md) | **バーチャル水族館**<br>手で魚と触れ合える癒やしの空間。サメやタコも登場します。 | `MediaPipe Hands` `Canvas` `Audio` |
-| <img src="animals/images/retriever.jpg" width="40"> | **見守りレトリバー🐕**<br>[(Retriever)](static/retriever.md) | **年齢換算 & 健康**<br>ペットの年齢を人間に換算し、ライフステージに合わせた健康アドバイスを提供。 | `FastAPI` `Vanilla JS` |
+| <img src="animals/images/retriever.jpg" width="40"> | **見守りレトリバー🐕**<br>[(Retriever)](animals/retriever.md) | **年齢換算 & 健康**<br>ペットの年齢を人間に換算し、ライフステージに合わせた健康アドバイスを提供。 | `FastAPI` `Vanilla JS` |
 | <img src="animals/images/wolf.jpg" width="40"> | **独り言シャドーイング Wolf🐺**<br>[(Wolf)](animals/wolf.md) | **英語学習 & 遠吠え**<br>日本語の独り言をCoolな英語に変換し、AIと一緒に遠吠えシャドーイング。 | `Cloud TTS` `Firestore` |
 | <span style="font-size: 30px">🐾</span> | **モモンガドラキュラの生存記録🐾**<br>[(Sugar Glider Dracula)](animals/dracula.md) | **ライフログ & ゲーム**<br>太陽を避けて装備を整え、称号を手に入力しよう。 | `Vanilla JS` `Geolocation API` |
 | <span style="font-size: 30px">🐼</span> | **きのたけ聖戦 レッサーパンダ🐼**<br>[(Lesser Panda)](LESSER_PANDA.md) | **改行バトル**<br>たけのこ派 vs きのこ派の票を競わせるコミュニティ投票ゲーム。 | `FastAPI` `Firestore` |
-| <span style="font-size: 30px">🐈</span> | **高貴なCEOシャム猫🐈**<br>[(Lord F)](static/lord_f.md) | **1人用SNS**<br>高貴なCEOシャム猫が労う、陰キャ専用1人用SNS。 | `Vanilla JS` `Firestore` `Firebase` |
+| <span style="font-size: 30px">🐈</span> | **高貴なCEOシャム猫🐈**<br>[(Lord F)](animals/lord_f.md) | **1人用SNS**<br>高貴なCEOシャム猫が労う、陰キャ専用1人用SNS。 | `Vanilla JS` `Firestore` `Firebase` |
 
 ## 👉 **[詳細ドキュメントとデモはこちら (animals/README.md)](animals/README.md)**
 
