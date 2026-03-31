@@ -1619,7 +1619,8 @@ const GameEngine = {
 
     // ── Surface tension hold timer ───────────────
     if (State.surfaceTensionMode) {
-      const tiltOk = Math.abs(State.betaAngle) < 2 && Math.abs(State.gammaAngle) < 2;
+      // Only check left/right tilt (gamma). Beta is screen up/down, which depends on how they hold the phone.
+      const tiltOk = Math.abs(State.gammaAngle) < 4;
       // OR: if no sensors, check mouse/drag angle
       const dragOk = !State.sensorsGranted && Math.abs(State.pourAngle) < 5;
       const isStill = State.sensorsGranted ? tiltOk : dragOk;
