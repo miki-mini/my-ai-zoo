@@ -324,7 +324,7 @@
     <div id="game-container">
         <video id="input-video" playsinline></video>
         <canvas id="output_canvas"></canvas>
-        <img src="static/images/squirrel/tree.png" class="tree-decoration">
+        <img src="images/squirrel/tree.png" class="tree-decoration">
         <div class="center-line"></div>
         <div class="fever-text" id="fever-text">FEVER TIME!!</div>
 
@@ -346,10 +346,10 @@
 
             <div class="footer">
                 <div class="squirrel-container" id="p1-squirrel-box">
-                    <img src="static/images/squirrel/squirrel_neutral.png?v=4" class="squirrel-img" id="p1-img">
+                    <img src="images/squirrel/squirrel_neutral.png?v=4" class="squirrel-img" id="p1-img">
                 </div>
                 <div class="squirrel-container" id="p2-squirrel-box">
-                    <img src="static/images/squirrel/squirrel_neutral.png?v=4" class="squirrel-img" id="p2-img">
+                    <img src="images/squirrel/squirrel_neutral.png?v=4" class="squirrel-img" id="p2-img">
                 </div>
             </div>
         </div>
@@ -384,12 +384,12 @@
         <div style="display:flex; gap:40px; align-items:flex-end; margin: 30px 0;">
             <div style="text-align:center;">
                 <p>Player 1</p>
-                <img src="static/images/squirrel/squirrel_neutral.png?v=4" id="res-p1-img" width="150" height="150"
+                <img src="images/squirrel/squirrel_neutral.png?v=4" id="res-p1-img" width="150" height="150"
                     style="object-fit:contain;">
             </div>
             <div style="text-align:center;">
                 <p>Player 2</p>
-                <img src="static/images/squirrel/squirrel_neutral.png?v=4" id="res-p2-img" width="150" height="150"
+                <img src="images/squirrel/squirrel_neutral.png?v=4" id="res-p2-img" width="150" height="150"
                     style="object-fit:contain;">
             </div>
         </div>
@@ -400,14 +400,14 @@
         // Assets Paths
         const v = '?v=4'; // Cache buster
         const IMAGES = {
-            neutral: 'static/images/squirrel/squirrel_neutral.png' + v,
-            cheek1: 'static/images/squirrel/squirrel_cheek_1.png' + v,
-            cheek2: 'static/images/squirrel/squirrel_cheek_2.png' + v,
-            win: 'static/images/squirrel/squirrel_win.png' + v,
-            pain: 'static/images/squirrel/squirrel_pain.png' + v,
-            acorn: 'static/images/squirrel/item_acorn.png' + v,
-            walnut: 'static/images/squirrel/item_walnut.png' + v,
-            chestnut: 'static/images/squirrel/item_chestnut.png' + v
+            neutral: 'images/squirrel/squirrel_neutral.png' + v,
+            cheek1: 'images/squirrel/squirrel_cheek_1.png' + v,
+            cheek2: 'images/squirrel/squirrel_cheek_2.png' + v,
+            win: 'images/squirrel/squirrel_win.png' + v,
+            pain: 'images/squirrel/squirrel_pain.png' + v,
+            acorn: 'images/squirrel/item_acorn.png' + v,
+            walnut: 'images/squirrel/item_walnut.png' + v,
+            chestnut: 'images/squirrel/item_chestnut.png' + v
         };
 
         const ELEMENTS = {
@@ -490,7 +490,7 @@
         // Audio System (Synthesized Sounds & BGM)
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        const BGM = new Audio('static/images/squirrel/bgm.mp3');
+        const BGM = new Audio('images/squirrel/bgm.mp3');
         BGM.loop = true;
         BGM.volume = 0.3;
         BGM.preload = 'auto'; // Preload the audio
