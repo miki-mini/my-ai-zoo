@@ -7,6 +7,7 @@ echo ==========================================
 echo   🤖 VOIDOLL SYSTEM LAUNCHING...
 echo ==========================================
 
+call .\.venv\Scripts\activate
 python desktop/voidoll_main.py
 
 if %errorlevel% neq 0 (

@@ -22,6 +22,9 @@ __pycache__/
 # --- VS Codeの設定 ---
 .vscode/
 
+# --- Local Environments ---
+.venv/
+
 # --- Terraform (絶対に公開してはいけないファイル) ---
 .terraform/
 *.tfstate
