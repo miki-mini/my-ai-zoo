@@ -99,6 +99,7 @@ graph TD
 | <span style="font-size: 30px">🐾</span> | **モモンガドラキュラの生存記録🐾**<br>[(Sugar Glider Dracula)](animals/dracula.md) | **ライフログ & ゲーム**<br>太陽を避けて装備を整え、称号を手に入力しよう。 | `Vanilla JS` `Geolocation API` |
 | <span style="font-size: 30px">🐼</span> | **きのたけ聖戦 レッサーパンダ🐼**<br>[(Lesser Panda)](animals/LESSER_PANDA.md) | **改行バトル**<br>たけのこ派 vs きのこ派の票を競わせるコミュニティ投票ゲーム。 | `FastAPI` `Firestore` |
 | <span style="font-size: 30px">🐈</span> | **高貴なCEOシャム猫🐈**<br>[(Lord F)](animals/lord_f.md) | **1人用SNS**<br>高貴なCEOシャム猫が労う、陰キャ専用1人用SNS。 | `Vanilla JS` `Firestore` `Firebase` |
+| <span style="font-size: 30px">🦛</span> | **オカンカバの詰め替え無双🦛**<br>[(Mother Hippo)](animals/hippo.md) | **タクティカル詰め替え**<br>スマホの傾きでこぼさずに液体を詰めるアクションゲーム。 | `DeviceOrientation` `Canvas` `Web Audio` |
 
 ## 👉 **[詳細ドキュメントとデモはこちら (animals/README.md)](animals/README.md)**
 
