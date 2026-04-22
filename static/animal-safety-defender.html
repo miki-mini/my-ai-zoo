@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Animal Safety Defender</title>
+
+  <!--
+    ============================================================
+    FONT: Press Start 2P (Google Fonts)
+    URL: https://fonts.google.com/specimen/Press+Start+2P
+    Purpose: Authentic 8-bit pixel font for all UI text.
+    ============================================================
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;               /* Pure black arcade cabinet feel */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: 'Press Start 2P', monospace;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* ── Canvas wrapper adds CRT outer glow ──────────────── */
+    #gameWrapper {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      /* Outer phosphor glow mimicking a real CRT monitor */
+      box-shadow:
+        0 0 20px #0ff,
+        0 0 60px #00f8,
+        0 0 120px #00f4;
+      border: 2px solid #0ff4;
+    }
+
+    /* ── Main game canvas ─────────────────────────────────── */
+    #gameCanvas {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: #000;
+      image-rendering: pixelated; /* Keep pixels crisp when scaled */
+    }
+
+    /*
+      CRT scanline overlay – a semi-transparent div placed on top of
+      the canvas. Each horizontal stripe simulates the dark gap between
+      phosphor lines on a real CRT screen.
+    */
+    #crt {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; /* Let click/touch pass through to canvas */
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent 0px,
+        transparent 2px,
+        rgba(0,0,0,0.18) 2px,
+        rgba(0,0,0,0.18) 4px
+      );
+      /* Subtle flicker animation for extra authenticity */
+      animation: flicker 8s infinite;
+    }
+
+    @keyframes flicker {
+      0%,100%  { opacity: 1; }
+      92%      { opacity: 1; }
+      93%      { opacity: 0.85; }
+      94%      { opacity: 1; }
+      97%      { opacity: 0.9; }
+      98%      { opacity: 1; }
+    }
+
+    /* Trivia popup overlay */
+    #triviaBox {
+      display: none;
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,30,0.97);
+      border: 3px solid #0ff;
+      padding: 24px 28px;
+      max-width: 520px;
+      text-align: center;
+      z-index: 10;
+      box-shadow: 0 0 30px #0ff8;
+    }
+    #triviaBox h2 {
+      font-size: 11px;
+      color: #ff0;
+      margin-bottom: 14px;
+      text-shadow: 0 0 8px #ff0;
+    }
+    #triviaBox p {
+      font-size: 9px;
+      color: #0ff;
+      line-height: 1.8;
+      margin-bottom: 16px;
+    }
+    #triviaBtn {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 9px;
+      background: #0ff;
+      color: #000;
+      border: none;
+      padding: 8px 20px;
+      cursor: pointer;
+    }
+    #triviaBtn:hover { background: #ff0; }
+
+    /* ── Touch Controls ───────────────────────────────────── */
+    #touchControls {
+      display: none;
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      justify-content: space-between;
+      padding: 0 40px;
+      z-index: 20;
+    }
+    .touch-btn {
+      background: rgba(0, 255, 255, 0.2);
+      border: 2px solid #0ff;
+      color: #0ff;
+      font-size: 24px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      box-shadow: 0 0 10px #0ff;
+    }
+    .touch-btn:active { background: rgba(0, 255, 255, 0.6); }
+    .touch-left-right { display: flex; gap: 30px; }
+    
+    @media (max-width: 800px), (hover: none) and (pointer: coarse) {
+      #touchControls { display: flex; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="gameWrapper">
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <div id="crt"></div>
+
+  <div id="touchControls">
+    <div class="touch-left-right">
+      <div class="touch-btn" id="btnLeft">←</div>
+      <div class="touch-btn" id="btnRight">→</div>
+    </div>
+    <div class="touch-btn" id="btnShoot">A</div>
+  </div>
+
+  <button id="pauseBtn" style="position: absolute; top: 10px; right: 10px; z-index: 30; background: rgba(0,0,0,0.5); border: 2px solid #0ff; color: #0ff; font-family: 'Press Start 2P', monospace; padding: 10px; cursor: pointer;">PAUSE</button>
+
+  <!-- Trivia popup for Level 2 Silvervine power-up -->
+  <div id="triviaBox">
+    <h2>★ DID YOU KNOW? ★</h2>
+    <p id="triviaText"></p>
+    <button id="triviaBtn">OK! FIGHT ON!</button>
+  </div>
+</div>
+
+<script>
+"use strict";
+/*
+  ================================================================
+  ANIMAL SAFETY DEFENDER
+  A Space Invaders homage — pixel art arcade game in pure JS.
+  ================================================================
+
+  ── REFERENCES ──────────────────────────────────────────────────
+
+  [1] Canvas API – 2D Rendering Context
+  MDN: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+  "The CanvasRenderingContext2D interface, part of the Canvas API,
+   provides the 2D rendering context for the drawing surface of a
+   <canvas> element."
+
+  [2] requestAnimationFrame (game loop)
+  MDN: https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame
+  "Tells the browser that you wish to perform an animation and
+   requests that the browser calls a specified function to update an
+   animation right before the next repaint."
+
+  [3] Web Audio API
+  MDN: https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
+  "The Web Audio API provides a powerful and versatile system for
+   controlling audio on the Web, allowing developers to choose audio
+   sources, add effects, create audio visualizations, apply spatial
+   effects, and much more."
+
+  [4] KeyboardEvent
+  MDN: https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent
+  "KeyboardEvent objects describe a user interaction with the keyboard.
+   Each event describes a single interaction between the user and a key."
+
+  [5] AABB Collision Detection
+  MDN / general algorithm:
+  "Two axis-aligned bounding boxes overlap when their intervals on
+   both the X and Y axes overlap simultaneously."
+  Formula: !(a.right < b.left || a.left > b.right ||
+              a.bottom < b.top || a.top > b.bottom)
+  ================================================================
+*/
+
+/* ────────────────────────────────────────────────────────────────
+   CANVAS SETUP
+   Ref [1]: We grab the 2D context from the canvas element.
+   '2d' specifies the rendering context type (as opposed to 'webgl').
+   ──────────────────────────────────────────────────────────────── */
+const canvas = document.getElementById('gameCanvas');
+const ctx    = canvas.getContext('2d');          // Our drawing pen
+const W      = canvas.width;   // 800 px – logical game width
+const H      = canvas.height;  // 600 px – logical game height
+
+/* ────────────────────────────────────────────────────────────────
+   WEB AUDIO API SETUP
+   Ref [3]: AudioContext is the master node. All sounds route through
+   the destination (speakers). We use OscillatorNode + GainNode to
+   synthesise chiptune beeps without any external audio files.
+   ──────────────────────────────────────────────────────────────── */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null; // Lazy-initialised on first user gesture (browser policy)
+
+/** Create a new AudioContext if not already created (browsers block
+    audio until the user has interacted with the page). */
+function ensureAudio() {
+  if (!audioCtx) {
+    audioCtx = new AudioCtx();
+  }
+}
+
+/**
+ * playTone – synthesises a simple chiptune beep.
+ * @param {number} freq      – pitch in Hz (e.g. 440 = A4)
+ * @param {number} duration  – length in seconds
+ * @param {string} type      – oscillator waveform: 'square'|'sawtooth'|'triangle'|'sine'
+ * @param {number} vol       – gain 0..1
+ *
+ * How it works (Ref [3]):
+ *   OscillatorNode → GainNode → AudioContext.destination (speakers)
+ *   We schedule start/stop times so tones don't block the main thread.
+ */
+function playTone(freq, duration, type = 'square', vol = 0.18) {
+  if (!audioCtx) return;                     // Audio not ready yet
+  const osc  = audioCtx.createOscillator(); // Raw waveform generator
+  const gain = audioCtx.createGain();       // Volume control node
+
+  osc.type            = type;              // Waveform shape (square = classic 8-bit)
+  osc.frequency.value = freq;             // Pitch
+  gain.gain.value     = vol;              // Volume
+
+  // Wire: oscillator → gain → output
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  const now = audioCtx.currentTime;
+  osc.start(now);
+  // Fade out slightly to avoid a clicking artefact at note end
+  gain.gain.setValueAtTime(vol, now);
+  gain.gain.linearRampToValueAtTime(0, now + duration);
+  osc.stop(now + duration + 0.01); // Stop a tiny bit after gain hits 0
+}
+
+/** Shoot SFX – quick rising blip */
+function sfxShoot()   { ensureAudio(); playTone(880, 0.07, 'square',   0.12); }
+
+/** Explosion SFX – low rumble burst */
+function sfxExplode() { ensureAudio(); playTone(120, 0.18, 'sawtooth', 0.22); playTone(80, 0.25, 'square', 0.12); }
+
+/** Power-up SFX – ascending arpeggio */
+function sfxPowerUp() {
+  ensureAudio();
+  [523, 659, 784, 1047].forEach((f, i) =>
+    setTimeout(() => playTone(f, 0.12, 'triangle', 0.18), i * 80)
+  );
+}
+
+/** Hurt SFX – descending "oof" */
+function sfxHurt()    { ensureAudio(); playTone(220, 0.1, 'sawtooth', 0.2); playTone(160, 0.15, 'sawtooth', 0.18); }
+
+/** Game Over SFX – descending fanfare */
+function sfxGameOver() {
+  ensureAudio();
+  [440, 330, 220, 110].forEach((f, i) =>
+    setTimeout(() => playTone(f, 0.2, 'sawtooth', 0.22), i * 150)
+  );
+}
+
+/** Level clear jingle */
+function sfxLevelClear() {
+  ensureAudio();
+  [523, 659, 784, 523, 659, 1047].forEach((f, i) =>
+    setTimeout(() => playTone(f, 0.15, 'square', 0.18), i * 100)
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────
+   STATE MANAGEMENT
+   The game uses a simple finite-state machine (FSM).
+   Possible states: TITLE | PLAYING | PAUSED | LEVEL_CLEAR |
+                    TRIVIA | GAME_OVER | TRANSITION
+   ──────────────────────────────────────────────────────────────── */
+const STATE = {
+  TITLE:       'TITLE',
+  PLAYING:     'PLAYING',
+  PAUSED:      'PAUSED',
+  LEVEL_CLEAR: 'LEVEL_CLEAR',
+  TRIVIA:      'TRIVIA',
+  GAME_OVER:   'GAME_OVER',
+  TRANSITION:  'TRANSITION',
+};
+let gameState = STATE.TITLE; // Start at title screen
+
+/* ── Mutable game variables ──────────────────────────────────── */
+let score         = 0;   // Running score (persists across levels)
+let level         = 1;   // 1=Dog, 2=Cat, 3=Rabbit
+let shakeTimer    = 0;   // Screen-shake countdown in frames
+let shakeIntensity= 6;   // Pixels of max shake displacement
+let transitionTimer = 0; // Frames to show level clear screen
+
+/* ────────────────────────────────────────────────────────────────
+   INPUT HANDLING  (Ref [4])
+   We track which keys are currently held so movement feels smooth.
+   Using a Set allows O(1) has() checks.
+   ──────────────────────────────────────────────────────────────── */
+const keys = new Set(); // Set of currently pressed key codes
+
+/* ── Touch Event Bindings ───────────────────────────────────── */
+function bindTouch(id, code) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    keys.add(code);
+    if ((code === 'Space' || code === 'Enter') && gameState === STATE.TITLE) startGame();
+    if (code === 'Space' && gameState === STATE.GAME_OVER) startGame();
+  }, {passive: false});
+  btn.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    keys.delete(code);
+  }, {passive: false});
+  btn.addEventListener('touchcancel', (e) => {
+    e.preventDefault();
+    keys.delete(code);
+  }, {passive: false});
+}
+bindTouch('btnLeft', 'ArrowLeft');
+bindTouch('btnRight', 'ArrowRight');
+bindTouch('btnShoot', 'Space');
+
+window.addEventListener('keydown', e => {
+  keys.add(e.code);
+  // Prevent arrow keys from scrolling the page
+  if (['ArrowLeft','ArrowRight','Space','ArrowUp','ArrowDown'].includes(e.code)) {
+    e.preventDefault();
+  }
+  // Start game from title on Space/Enter
+  if ((e.code === 'Space' || e.code === 'Enter') && gameState === STATE.TITLE) {
+    startGame();
+  }
+  // Toggle Pause
+  if (e.code === 'KeyP' || e.code === 'Escape') {
+    togglePause();
+  }
+});
+window.addEventListener('keyup',  e => keys.delete(e.code));
+
+function togglePause() {
+  if (gameState === STATE.PLAYING) {
+    gameState = STATE.PAUSED;
+  } else if (gameState === STATE.PAUSED) {
+    gameState = STATE.PLAYING;
+  }
+}
+document.getElementById('pauseBtn').addEventListener('click', togglePause);
+document.getElementById('pauseBtn').addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  togglePause();
+}, {passive: false});
+
+/* ────────────────────────────────────────────────────────────────
+   PIXEL-ART DRAWING HELPERS
+   All characters are drawn procedurally with ctx.fillRect calls –
+   each call renders one "pixel" (scaled up for visibility).
+   'px' = our pixel size multiplier (4 = each dot is 4×4 real pixels).
+   ──────────────────────────────────────────────────────────────── */
+const px = 4; // 1 game-pixel = 4×4 real canvas pixels
+
+/**
+ * drawSprite – renders a 2-D array of colour strings as pixel art.
+ * @param {string[][]} grid  – 2D array; '.' = transparent, else CSS colour
+ * @param {number} x         – top-left X of sprite in canvas pixels
+ * @param {number} y         – top-left Y of sprite in canvas pixels
+ * @param {number} scale     – multiplier (default 1 → each cell = px×px)
+ */
+function drawSprite(grid, x, y, scale = 1) {
+  const s = px * scale; // real canvas pixels per cell
+  grid.forEach((row, gy) => {
+    row.forEach((col, gx) => {
+      if (col === '.') return;     // '.' means transparent – skip
+      ctx.fillStyle = col;
+      ctx.fillRect(x + gx * s, y + gy * s, s, s); // draw one "pixel"
+    });
+  });
+}
+
+/* ── Sprite definitions (pixel art grids) ──────────────────────
+   Colour key:
+     '.' = transparent
+     'T' = tan/skin
+     'B' = brown
+     'W' = white
+     'K' = black
+     'N' = nose pink
+     'G' = gold/yellow
+     colours can also be direct CSS hex/named values
+   We expand single-char shorthand to full CSS colour in drawSprite
+   by pre-processing through a palette map.
+   ──────────────────────────────────────────────────────────────── */
+
+/* Helper: expand palette shorthand → real colour */
+function pal(grid, map) {
+  return grid.map(row => row.map(c => map[c] || c));
+}
+
+/* ── DOG sprite (Shiba Inu) 14×12 cells ─────────────────────── */
+const DOG_PALETTE = {
+  '.': '.', T: '#e8a87c', B: '#c97b3a', W: '#fff', K: '#111',
+  N: '#e06060', G: '#f5c518', R: '#e05050'
+};
+const DOG_GRID_RAW = [
+  ['.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
+  ['.','.','.','B','B','B','B','B','B','.','.','.','.','.',],
+  ['.','.','B','T','T','T','T','T','T','B','.','.','.','.',],
+  ['.','B','T','T','K','.','T','K','.','T','T','B','.','.'],
+  ['.','B','T','T','T','N','T','T','T','T','T','B','.','.'],
+  ['.','B','T','T','T','T','T','T','T','T','T','B','.','.'],
+  ['.','.','B','T','W','W','T','W','W','T','B','.','.','.'],
+  ['.','.','.','B','B','B','B','B','B','B','.','.','.','.',],
+  ['.','.','B','T','T','B','T','B','T','T','B','.','.','.'],
+  ['.','B','T','T','T','T','T','T','T','T','T','B','.','.'],
+  ['.','.','.','.','B','T','.','.','T','B','.','.','.','.',],
+  ['.','.','.','.','.','B','.','.','B','.','.','.','.','.',],
+];
+const DOG_GRID = pal(DOG_GRID_RAW, DOG_PALETTE);
+
+/* ── DOG sad variant (crying) ─────────────────────────────────── */
+const DOG_SAD_GRID_RAW = [
+  ['.','.','.','.','.','.','.','.','.','.','.','.','.','.',],
+  ['.','.','.','B','B','B','B','B','B','.','.','.','.','.',],
+  ['.','.','B','T','T','T','T','T','T','B','.','.','.','.',],
+  ['.','B','T','T','K','.','T','K','.','T','T','B','.','.'],
+  ['.','B','T','T','T','N','T','T','T','T','T','B','.','.'],
+  ['.','B','T','T','T','T','T','T','T','T','T','B','.','.'],
+  ['.','.','B','T','B','B','T','B','B','T','B','.','.','.'],  // sad mouth
+  ['.','.','W','B','T','T','T','T','T','B','W','.','.','.'],  // tears
+  ['.','.','B','T','T','B','T','B','T','T','B','.','.','.'],
+  ['.','B','T','T','T','T','T','T','T','T','T','B','.','.'],
+  ['.','.','.','.','B','T','.','.','T','B','.','.','.','.',],
+  ['.','.','.','.','.','B','.','.','B','.','.','.','.','.',],
+];
+const DOG_SAD_GRID = pal(DOG_SAD_GRID_RAW, DOG_PALETTE);
+
+/* ── CAT sprite 12×11 cells ──────────────────────────────────── */
+const CAT_PALETTE = {
+  '.': '.', T: '#c8b8a2', B: '#8a7060', W: '#fff', K: '#111',
+  N: '#e08080', G: '#88cc44', O: '#ff8c00'
+};
+const CAT_GRID_RAW = [
+  ['.','.','B','.','.','.','.','.','.','B','.','.'],
+  ['.','B','T','B','.','.','.','B','T','T','B','.'],
+  ['B','T','T','T','B','B','B','T','T','T','T','B'],
+  ['B','T','K','.','T','T','T','.','K','T','T','B'],
+  ['B','T','T','N','T','T','T','T','T','T','T','B'],
+  ['B','T','T','T','T','T','T','T','T','T','T','B'],
+  ['.','B','T','W','W','T','T','W','W','T','B','.'],
+  ['.','.','B','B','B','B','B','B','B','B','.','.',],
+  ['.','.','B','T','T','B','T','B','T','B','.','.'],
+  ['.','.','.','B','T','T','T','T','B','.','.','.'],
+  ['.','.','.','.','B','B','.','.','.','.','.','.'],
+];
+const CAT_GRID = pal(CAT_GRID_RAW, CAT_PALETTE);
+
+/* ── RABBIT sprite 12×13 cells ──────────────────────────────── */
+const RABBIT_PALETTE = {
+  '.': '.', W: '#f0f0f0', P: '#f0c0c0', K: '#111',
+  N: '#e07070', R: '#cc2222', G: '#88dd44'
+};
+const RABBIT_GRID_RAW = [
+  ['.','W','W','.','.','.','.','.','.','W','W','.'],
+  ['W','P','W','W','.','.','.','.','W','W','P','W'],
+  ['W','P','W','W','.','.','.','.','W','W','P','W'],
+  ['.','.','W','W','W','W','W','W','W','W','.','.'],
+  ['.','.','W','K','.','W','W','.','K','W','.','.'],
+  ['.','.','W','W','N','W','W','N','W','W','.','.'],
+  ['.','.','W','W','W','W','W','W','W','W','.','.'],
+  ['.','.','W','W','W','W','W','W','W','W','.','.'],
+  ['.','.','W','W','W','W','W','W','W','W','.','.'],
+  ['.','.','W','P','W','W','W','W','P','W','.','.'],
+  ['.','.','W','W','.','.','.','.','W','W','.','.'],
+  ['.','.','W','W','.','.','.','.','W','W','.','.'],
+  ['.','.','.','.','.','.','.','.','.','.','.','.'],
+];
+const RABBIT_GRID = pal(RABBIT_GRID_RAW, RABBIT_PALETTE);
+
+/* ── Food invader sprites (10×8 each) ────────────────────────── */
+
+/* Chocolate bar 🍫 */
+const CHOC_GRID = [
+  ['#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317'],
+  ['#5c3317','#7b4826','#7b4826','#7b4826','#7b4826','#7b4826','#7b4826','#5c3317'],
+  ['#7b4826','#a0622f','#5c3317','#a0622f','#a0622f','#5c3317','#a0622f','#7b4826'],
+  ['#7b4826','#a0622f','#5c3317','#a0622f','#a0622f','#5c3317','#a0622f','#7b4826'],
+  ['#7b4826','#a0622f','#7b4826','#7b4826','#7b4826','#7b4826','#a0622f','#7b4826'],
+  ['#7b4826','#a0622f','#a0622f','#a0622f','#a0622f','#a0622f','#a0622f','#7b4826'],
+  ['#5c3317','#7b4826','#7b4826','#7b4826','#7b4826','#7b4826','#7b4826','#5c3317'],
+  ['#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317'],
+];
+
+/* Onion 🧅 */
+const ONION_GRID = [
+  ['.','.','.','#a0522d','#a0522d','.','.','.'],
+  ['.','.','.','#d4a017','#d4a017','.','.','.'],
+  ['.','.','#d4a017','#f5e06a','#f5e06a','#d4a017','.','.'],
+  ['.','#d4a017','#f5e06a','#fffacd','#fffacd','#f5e06a','#d4a017','.'],
+  ['.','#d4a017','#f5e06a','#fffacd','#fffacd','#f5e06a','#d4a017','.'],
+  ['.','.','#d4a017','#f5e06a','#f5e06a','#d4a017','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* Grapes 🍇 */
+const GRAPE_GRID = [
+  ['.','.','.','#4a4a4a','#4a4a4a','.','.','.'],
+  ['.','.','.','.','.','.','.'],
+  ['.','#7b2fbe','#7b2fbe','.','#7b2fbe','#7b2fbe','.'],
+  ['#7b2fbe','#9b4fd4','#7b2fbe','#7b2fbe','#7b2fbe','#9b4fd4','#7b2fbe','.'],
+  ['#7b2fbe','#9b4fd4','#7b2fbe','#7b2fbe','#7b2fbe','#9b4fd4','#7b2fbe','.'],
+  ['.','#7b2fbe','#7b2fbe','#7b2fbe','#7b2fbe','#7b2fbe','.','.'],
+  ['.','.','#7b2fbe','#9b4fd4','#7b2fbe','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* Lily flower 💐 */
+const LILY_GRID = [
+  ['.','#ff69b4','.','.','.','.','#ff69b4','.'],
+  ['#ff69b4','#ffb6c1','#ff69b4','.','#ff69b4','#ffb6c1','#ff69b4','.'],
+  ['.','#ff69b4','.','.','.','.','#ff69b4','.'],
+  ['.','.','.','.','.','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+  ['.','.','#228b22','.','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* Raw Squid 🦑 */
+const SQUID_GRID = [
+  ['.','.','.','#f0e0d0','#f0e0d0','.','.','.'],
+  ['.','.','#f0e0d0','#ffe4c4','#ffe4c4','#f0e0d0','.','.'],
+  ['.','#f0e0d0','#ffe4c4','#ffd5b0','#ffd5b0','#ffe4c4','#f0e0d0','.'],
+  ['#c0a080','#ffe4c4','#ffd5b0','#ffe4c4','#ffe4c4','#ffd5b0','#ffe4c4','#c0a080'],
+  ['#c0a080','#ffe4c4','#ffe4c4','#ffe4c4','#ffe4c4','#ffe4c4','#ffe4c4','#c0a080'],
+  ['#c0a080','.','#c0a080','.','#c0a080','.','#c0a080','.'],
+  ['#c0a080','.','#c0a080','.','#c0a080','.','#c0a080','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* Milk carton 🥛 */
+const MILK_GRID = [
+  ['.','.','.','#fff','#fff','.','.','.'],
+  ['.','.','#ddd','#fff','#fff','#ddd','.','.'],
+  ['.','#ddd','#fff','#fff','#fff','#fff','#ddd','.'],
+  ['.','#ddd','#fff','#4fc','#4fc','#fff','#ddd','.'],
+  ['.','#ddd','#fff','#fff','#fff','#fff','#ddd','.'],
+  ['.','#ddd','#fff','#fff','#fff','#fff','#ddd','.'],
+  ['.','#ddd','#ddd','#ddd','#ddd','#ddd','#ddd','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* Tuna can 🐟 */
+const TUNA_GRID = [
+  ['.','.','.','.','.','.','.'],
+  ['.','#c0c0c0','#c0c0c0','#c0c0c0','#c0c0c0','#c0c0c0','.'],
+  ['#a0a0a0','#e0e0e0','#ff8c00','#ff8c00','#ff8c00','#e0e0e0','#a0a0a0'],
+  ['#a0a0a0','#e0e0e0','#ffa040','#ffa040','#ffa040','#e0e0e0','#a0a0a0'],
+  ['#a0a0a0','#e0e0e0','#ff8c00','#ff8c00','#ff8c00','#e0e0e0','#a0a0a0'],
+  ['.','#c0c0c0','#c0c0c0','#c0c0c0','#c0c0c0','#c0c0c0','.'],
+  ['.','.','.','.','.','.','.'],
+  ['.','.','.','.','.','.','.'],
+];
+
+/* Bread/Cookie 🍪 */
+const BREAD_GRID = [
+  ['.','.','#d4a55a','#d4a55a','#d4a55a','#d4a55a','.','.'],
+  ['.','#d4a55a','#e8c080','#e8c080','#e8c080','#e8c080','#d4a55a','.'],
+  ['#d4a55a','#e8c080','#c0621c','#e8c080','#e8c080','#c0621c','#e8c080','#d4a55a'],
+  ['#d4a55a','#e8c080','#e8c080','#c0621c','#c0621c','#e8c080','#e8c080','#d4a55a'],
+  ['#d4a55a','#e8c080','#e8c080','#c0621c','#c0621c','#e8c080','#e8c080','#d4a55a'],
+  ['#d4a55a','#e8c080','#c0621c','#e8c080','#e8c080','#c0621c','#e8c080','#d4a55a'],
+  ['.','#d4a55a','#e8c080','#e8c080','#e8c080','#e8c080','#d4a55a','.'],
+  ['.','.','#d4a55a','#d4a55a','#d4a55a','#d4a55a','.','.'],
+];
+
+/* Potato Sprout ☠️ */
+const POTATO_GRID = [
+  ['.','.','.','.','#88aa44','.','.','.',],
+  ['.','.','.','#88aa44','#aacc55','#88aa44','.','.'],
+  ['.','.','.','.','.','.','.'],
+  ['.','#c8a050','#c8a050','#c8a050','#c8a050','#c8a050','.'],
+  ['#c8a050','#e8c070','#c8a050','#c8a050','#c8a050','#e8c070','#c8a050'],
+  ['#c8a050','#e8c070','#c8a050','#c8a050','#c8a050','#e8c070','#c8a050'],
+  ['.','#c8a050','#c8a050','#c8a050','#c8a050','#c8a050','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* Garlic 🧄 */
+const GARLIC_GRID = [
+  ['.','.','.','#88aa44','#88aa44','.','.','.'],
+  ['.','.','#d4d4c0','#e8e8d4','#e8e8d4','#d4d4c0','.','.'],
+  ['.','#d4d4c0','#e8e8d4','#fff8f0','#fff8f0','#e8e8d4','#d4d4c0','.'],
+  ['#d4d4c0','#e8e8d4','#fff8f0','#e8e8d4','#e8e8d4','#fff8f0','#e8e8d4','#d4d4c0'],
+  ['#d4d4c0','#e8e8d4','#e8e8d4','#e8e8d4','#e8e8d4','#e8e8d4','#e8e8d4','#d4d4c0'],
+  ['.','#d4d4c0','#e8e8d4','#e8e8d4','#e8e8d4','#e8e8d4','#d4d4c0','.'],
+  ['.','.','#d4d4c0','#d4d4c0','#d4d4c0','#d4d4c0','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* Spinach (actually toxic to rabbits in excess) */
+const SPINACH_GRID = [
+  ['.','.','.','.','.','.','.'],
+  ['.','#228b22','#2d9b2d','.','#228b22','.','.'],
+  ['#228b22','#33bb33','#2d9b2d','#228b22','#33bb33','#228b22','.'],
+  ['#228b22','#33bb33','#33bb33','#33bb33','#33bb33','#228b22','.'],
+  ['.','#228b22','#33bb33','#33bb33','#228b22','.','.','.'],
+  ['.','.','#228b22','#228b22','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* Nuts 🥜 */
+const NUT_GRID = [
+  ['.','.','.','.','.','.','.','.'],
+  ['.','.','.','#8b6914','#8b6914','.','.','.'],
+  ['.','.','#c8a040','#d4b050','#d4b050','#c8a040','.','.'],
+  ['.','#c8a040','#d4b050','#e8c060','#e8c060','#d4b050','#c8a040','.'],
+  ['.','#c8a040','#d4b050','#e8c060','#e8c060','#d4b050','#c8a040','.'],
+  ['.','.','#c8a040','#d4b050','#d4b050','#c8a040','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* ── UFO / Special entity sprites ────────────────────────────── */
+/* Bone-in Meat 🍖 (Level 1 UFO) */
+const BONE_GRID = [
+  ['.','#f5deb3','#f5deb3','.','.','.','#f5deb3','#f5deb3',],
+  ['#f5deb3','#fff','#f5deb3','.','.','.','#f5deb3','#fff',],
+  ['.','#f5deb3','#f5deb3','#f5deb3','#f5deb3','#f5deb3','#f5deb3','.'],
+  ['.','.','.','#f5deb3','#c89060','.','.','.',],
+  ['.','.','.','#c89060','#f5deb3','.','.','.',],
+  ['.','#f5deb3','#f5deb3','#f5deb3','#f5deb3','#f5deb3','#f5deb3','.'],
+  ['#f5deb3','#fff','#f5deb3','.','.','.','#f5deb3','#fff',],
+  ['.','#f5deb3','#f5deb3','.','.','.','#f5deb3','#f5deb3',],
+];
+
+/* Silvervine/Matatabi (Level 2 UFO) – stylised plant */
+const MATATABI_GRID = [
+  ['.','.','.','#55cc44','#55cc44','.','.','.'],
+  ['.','.','#55cc44','#88ee66','#88ee66','#55cc44','.','.'],
+  ['.','#55cc44','#88ee66','#aaff88','#aaff88','#88ee66','#55cc44','.'],
+  ['#55cc44','#88ee66','#aaff88','#fff','#fff','#aaff88','#88ee66','#55cc44'],
+  ['.','.','.','#55cc44','#55cc44','.','.','.'],
+  ['.','.','.','#55cc44','#55cc44','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* Timothy Hay 🌾 (Level 3 UFO) */
+const HAY_GRID = [
+  ['.','.','.','#d4a520','.','.','.','.'],
+  ['.','.','#d4a520','#f0c040','.','#d4a520','.','.'],
+  ['.','#d4a520','#f0c040','#f0c040','#d4a520','#f0c040','#d4a520','.'],
+  ['#d4a520','#f0c040','#f0c040','#d4a520','#f0c040','#f0c040','#d4a520','.'],
+  ['.','.','#d4a520','#d4a520','#d4a520','#d4a520','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+  ['.','.','.','.','.','.','.','.'],
+];
+
+/* Vomit particle (for vomit mechanic) */
+const VOMIT_COLOR = '#aadd00';
+
+/* ────────────────────────────────────────────────────────────────
+   GAME OBJECT CLASSES
+   ──────────────────────────────────────────────────────────────── */
+
+/**
+ * Player – the animal the user controls.
+ * Lives at the bottom of the screen, moves left/right.
+ */
+class Player {
+  constructor(lvl) {
+    this.w      = 14 * px;   // sprite width in canvas pixels
+    this.h      = 12 * px;   // sprite height
+    this.x      = W / 2 - this.w / 2; // start centred
+    this.y      = H - this.h - 20;    // near the bottom
+    this.speed  = 4;          // pixels per frame
+    this.lives  = 3;          // starting lives
+    this.maxLives = 3;
+    this.level  = lvl;        // which level (1/2/3)
+    this.invincible   = false; // Matatabi barrier active?
+    this.invincTimer  = 0;     // frames remaining for invincibility
+    this.tripleAtk    = false; // 3x attack power active?
+    this.tripleTimer  = 0;     // frames remaining for triple shot
+    this.speedBoost   = false; // Timothy hay speed boost active?
+    this.speedTimer   = 0;     // frames remaining for speed boost
+    this.shootCooldown = 0;    // frames until next shot allowed
+    this.hurtAnim     = 0;     // frames of hurt flash remaining
+    this.vomitAnim    = 0;     // frames of vomit animation remaining
+    this.hp    = lvl === 3 ? 1 : 5; // Rabbit = 1 HP (instant death), else 5
+  }
+
+  /** Move left/right based on held keys */
+  update() {
+    // Determine movement speed (with optional boost)
+    const spd = this.speedBoost ? this.speed * 2.5 : this.speed;
+
+    if (keys.has('ArrowLeft')  && this.x > 0)      this.x -= spd;
+    if (keys.has('ArrowRight') && this.x + this.w < W) this.x += spd;
+
+    // Count down power-up timers each frame
+    if (this.invincTimer  > 0) { this.invincTimer--;  if (this.invincTimer  === 0) this.invincible  = false; }
+    if (this.tripleTimer  > 0) { this.tripleTimer--;  if (this.tripleTimer  === 0) this.tripleAtk   = false; }
+    if (this.speedTimer   > 0) { this.speedTimer--;   if (this.speedTimer   === 0) this.speedBoost  = false; }
+    if (this.shootCooldown > 0) this.shootCooldown--;
+    if (this.hurtAnim     > 0) this.hurtAnim--;
+    if (this.vomitAnim    > 0) this.vomitAnim--;
+  }
+
+  /** Return the sprite grid to draw based on current state */
+  getSprite() {
+    if (this.level === 1) return this.hurtAnim > 0 ? DOG_SAD_GRID : DOG_GRID;
+    if (this.level === 2) return CAT_GRID;
+    return RABBIT_GRID;
+  }
+
+  /** Draw the player, with shield/hurt visual effects */
+  draw() {
+    ctx.save(); // Save context state so transforms don't bleed out
+
+    // Hurt flash: alternate opacity every 3 frames
+    if (this.hurtAnim > 0 && Math.floor(this.hurtAnim / 3) % 2 === 0) {
+      ctx.globalAlpha = 0.35;
+    }
+
+    drawSprite(this.getSprite(), this.x, this.y);
+
+    ctx.globalAlpha = 1;
+
+    // Invincibility barrier: glowing cyan ring around player
+    if (this.invincible) {
+      const cx  = this.x + this.w / 2;
+      const cy  = this.y + this.h / 2;
+      const r   = Math.max(this.w, this.h) * 0.7;
+      const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 120); // pulsing alpha
+      ctx.strokeStyle = `rgba(0,255,255,${pulse})`;
+      ctx.lineWidth   = 4;
+      ctx.shadowColor = '#0ff';
+      ctx.shadowBlur  = 18;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // Triple attack indicator: yellow aura
+    if (this.tripleAtk) {
+      ctx.strokeStyle = 'rgba(255,220,0,0.7)';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#ff0';
+      ctx.shadowBlur  = 14;
+      ctx.strokeRect(this.x - 4, this.y - 4, this.w + 8, this.h + 8);
+      ctx.shadowBlur = 0;
+    }
+
+    // Speed boost indicator: green trail dots
+    if (this.speedBoost) {
+      ctx.fillStyle = 'rgba(80,255,80,0.55)';
+      for (let i = 1; i <= 3; i++) {
+        ctx.beginPath();
+        ctx.arc(this.x + this.w / 2, this.y + this.h + i * 6, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    ctx.restore();
+  }
+}
+
+/**
+ * Bullet – fired upward by the player.
+ * active=false means it has hit something and should be removed.
+ */
+class Bullet {
+  constructor(x, y) {
+    this.x      = x;
+    this.y      = y;
+    this.w      = 4;
+    this.h      = 14;
+    this.speed  = 9;  // pixels per frame upward
+    this.active = true;
+  }
+  update() {
+    this.y -= this.speed;                   // Move up
+    if (this.y + this.h < 0) this.active = false; // Off screen → deactivate
+  }
+  draw() {
+    // Bright cyan laser bolt
+    ctx.fillStyle   = '#0ff';
+    ctx.shadowColor = '#0ff';
+    ctx.shadowBlur  = 8;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+    ctx.shadowBlur = 0;
+  }
+}
+
+/**
+ * Invader – one toxic food enemy.
+ * Descends toward the player; moves left/right in formation.
+ */
+class Invader {
+  /**
+   * @param {number} x        – initial X position
+   * @param {number} y        – initial Y position
+   * @param {string} type     – key into INVADER_TYPES config
+   * @param {boolean} isTrap  – if true, this is a "deceptive" invader (Cat level)
+   */
+  constructor(x, y, type, isTrap = false) {
+    this.x      = x;
+    this.y      = y;
+    this.w      = 8 * px;   // sprite is 8 cells × px px each
+    this.h      = 8 * px;
+    this.type   = type;
+    this.isTrap = isTrap;    // Trap invaders look safe but hurt
+    this.active = true;
+    this.points = isTrap ? 150 : 100; // Traps worth more points
+    this.hurtFlash = 0; // frames of white flash after being hit
+  }
+  draw() {
+    if (this.hurtFlash > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.5;
+      this.hurtFlash--;
+    }
+    drawSprite(INVADER_SPRITES[this.type], this.x, this.y);
+    if (this.hurtFlash > 0) ctx.restore();
+
+    // Label for deceptive trap invaders – a small "?" overlay
+    if (this.isTrap) {
+      ctx.fillStyle   = '#ff0';
+      ctx.font        = `bold ${px * 3}px 'Press Start 2P', monospace`;
+      ctx.textAlign   = 'center';
+      ctx.fillText('?', this.x + this.w / 2, this.y + this.h + px * 2);
+    }
+  }
+}
+
+/**
+ * EnemyBullet – projectile fired by invaders (used in level 3 bullet hell).
+ */
+class EnemyBullet {
+  constructor(x, y, vx, vy) {
+    this.x  = x;
+    this.y  = y;
+    this.vx = vx;  // horizontal velocity
+    this.vy = vy;  // vertical velocity (positive = downward)
+    this.w  = 5;
+    this.h  = 5;
+    this.active = true;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.y > H + 10 || this.x < -10 || this.x > W + 10) this.active = false;
+  }
+  draw() {
+    ctx.fillStyle   = '#f55';
+    ctx.shadowColor = '#f00';
+    ctx.shadowBlur  = 6;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+    ctx.shadowBlur  = 0;
+  }
+}
+
+/**
+ * UFO – special entity that drifts across the top of the screen.
+ * Shooting it grants a power-up specific to the current level.
+ */
+class UFO {
+  constructor(lvl) {
+    this.level   = lvl;
+    this.w       = 8 * px;
+    this.h       = 8 * px;
+    this.y       = 50;
+    this.speed   = 2.5;
+    this.active  = true;
+    this.points  = 500;
+    // Spawn from a random side
+    this.dir = Math.random() < 0.5 ? 1 : -1;
+    this.x   = this.dir === 1 ? -this.w : W + this.w;
+  }
+  update() {
+    this.x += this.speed * this.dir;
+    // Deactivate once fully off the other side
+    if ((this.dir === 1 && this.x > W + this.w) ||
+        (this.dir === -1 && this.x < -this.w)) {
+      this.active = false;
+    }
+  }
+  draw() {
+    const sprite = this.level === 1 ? BONE_GRID :
+                   this.level === 2 ? MATATABI_GRID : HAY_GRID;
+    drawSprite(sprite, this.x, this.y);
+    // Glowing halo
+    ctx.strokeStyle = '#ff0';
+    ctx.lineWidth   = 2;
+    ctx.shadowColor = '#ff0';
+    ctx.shadowBlur  = 12;
+    ctx.strokeRect(this.x - 2, this.y - 2, this.w + 4, this.h + 4);
+    ctx.shadowBlur  = 0;
+  }
+}
+
+/**
+ * Particle – single spark for explosion effects.
+ * Ref [1]: We draw tiny rectangles that drift outward and fade.
+ */
+class Particle {
+  constructor(x, y, color) {
+    this.x     = x;
+    this.y     = y;
+    this.vx    = (Math.random() - 0.5) * 6; // random scatter velocity
+    this.vy    = (Math.random() - 0.5) * 6;
+    this.life  = 1.0;   // 1=fully opaque, fades to 0
+    this.decay = 0.04 + Math.random() * 0.04;
+    this.size  = 3 + Math.random() * 4;
+    this.color = color || `hsl(${Math.random()*60+10},100%,60%)`;
+  }
+  update() {
+    this.x    += this.vx;
+    this.y    += this.vy;
+    this.vy   += 0.15; // slight gravity pull
+    this.life -= this.decay;
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.fillStyle   = this.color;
+    ctx.fillRect(this.x, this.y, this.size, this.size);
+    ctx.restore();
+  }
+}
+
+/**
+ * VomitParticle – special green blob for the vomit survival mechanic.
+ */
+class VomitParticle {
+  constructor(x, y) {
+    this.x    = x;
+    this.y    = y;
+    this.vx   = (Math.random() - 0.5) * 5;
+    this.vy   = -(Math.random() * 4 + 2); // shoot upward
+    this.life = 1.0;
+    this.size = 6 + Math.random() * 6;
+  }
+  update() {
+    this.x   += this.vx;
+    this.y   += this.vy;
+    this.vy  += 0.3;
+    this.life -= 0.03;
+  }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.fillStyle   = VOMIT_COLOR;
+    ctx.shadowColor = VOMIT_COLOR;
+    ctx.shadowBlur  = 8;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size / 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* ── Global invader sprite map ───────────────────────────────── */
+const INVADER_SPRITES = {
+  chocolate: CHOC_GRID,
+  onion:     ONION_GRID,
+  grapes:    GRAPE_GRID,
+  lily:      LILY_GRID,
+  squid:     SQUID_GRID,
+  milk:      MILK_GRID,
+  tuna:      TUNA_GRID,
+  bread:     BREAD_GRID,
+  potato:    POTATO_GRID,
+  garlic:    GARLIC_GRID,
+  spinach:   SPINACH_GRID,
+  nuts:      NUT_GRID,
+};
+
+/* ── Level configuration ──────────────────────────────────────── */
+const LEVEL_CONFIG = {
+  1: {
+    name: 'LEVEL 1: THE DOG',
+    color: '#f5c518',
+    invaderTypes: ['chocolate','onion','grapes'],
+    trapTypes:    [],
+    columns: 9, rows: 3,
+    invaderSpeed: 0.6,
+    shootInterval: 200,
+    bulletHell: false,
+  },
+  2: {
+    name: 'LEVEL 2: THE CAT',
+    color: '#88cc44',
+    invaderTypes: ['lily','grapes','chocolate','squid'],
+    trapTypes:    ['milk','tuna'],
+    columns: 10, rows: 4,
+    invaderSpeed: 0.9,
+    shootInterval: 140,
+    bulletHell: false,
+  },
+  3: {
+    name: 'LEVEL MAX: BOSS RABBIT',
+    color: '#ff4488',
+    invaderTypes: ['bread','potato','onion','garlic','chocolate','spinach','nuts'],
+    trapTypes:    [],
+    columns: 11, rows: 5,
+    invaderSpeed: 1.4,
+    shootInterval: 60,
+    bulletHell: true,
+  },
+};
+
+/* ────────────────────────────────────────────────────────────────
+   GAME STATE VARIABLES
+   All mutable state for the current round is stored here.
+   ──────────────────────────────────────────────────────────────── */
+let player      = null;
+let invaders    = [];      // array of active Invader objects
+let bullets     = [];      // array of active Bullet objects
+let enemyBullets= [];      // array of active EnemyBullet objects
+let particles   = [];      // array of active Particle / VomitParticle
+let ufo         = null;    // current UFO object, or null
+let ufoTimer    = 0;       // frames until next UFO spawns
+let invaderDir  = 1;       // 1 = moving right, -1 = moving left
+let invaderStep = 0;       // accumulated movement for edge detection
+let shootTimer  = 0;       // frames since last enemy shot
+let stars       = [];      // background stars for parallax effect
+let floatingTexts = [];    // screen-space text pop-ups (damage numbers etc.)
+let vomitMessage = '';     // "My tummy hurts~" message
+let vomitMsgTimer = 0;
+
+/* ── Floating damage / info text ─────────────────────────────── */
+class FloatingText {
+  constructor(text, x, y, color = '#fff') {
+    this.text  = text;
+    this.x     = x;
+    this.y     = y;
+    this.vy    = -1.2;
+    this.life  = 1.0;
+    this.color = color;
+  }
+  update() { this.y += this.vy; this.life -= 0.018; }
+  draw() {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.fillStyle   = this.color;
+    ctx.font        = `${px * 2}px 'Press Start 2P', monospace`;
+    ctx.textAlign   = 'center';
+    ctx.shadowColor = this.color;
+    ctx.shadowBlur  = 6;
+    ctx.fillText(this.text, this.x, this.y);
+    ctx.restore();
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   STAR BACKGROUND
+   Simple parallax scrolling stars to fill the dark canvas.
+   ──────────────────────────────────────────────────────────────── */
+function initStars() {
+  stars = [];
+  for (let i = 0; i < 80; i++) {
+    stars.push({
+      x:     Math.random() * W,
+      y:     Math.random() * H,
+      speed: 0.2 + Math.random() * 0.6,
+      r:     Math.random() < 0.3 ? 2 : 1,   // some bigger stars
+      alpha: 0.4 + Math.random() * 0.6,
+    });
+  }
+}
+
+function updateStars() {
+  stars.forEach(s => {
+    s.y += s.speed;       // drift downward
+    if (s.y > H) {
+      s.y = 0;            // wrap back to top
+      s.x = Math.random() * W;
+    }
+  });
+}
+
+function drawStars() {
+  stars.forEach(s => {
+    ctx.globalAlpha = s.alpha;
+    ctx.fillStyle   = '#fff';
+    ctx.fillRect(s.x, s.y, s.r, s.r);
+  });
+  ctx.globalAlpha = 1;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   INVADER GRID INITIALISATION
+   ──────────────────────────────────────────────────────────────── */
+function initInvaders() {
+  invaders    = [];
+  const cfg   = LEVEL_CONFIG[level];
+  const allTypes = [...cfg.invaderTypes]; // regular enemies
+  const trapTypes = [...cfg.trapTypes];   // deceptive enemies (Cat level)
+
+  const spacingX = 58;   // horizontal gap between invader cells
+  const spacingY = 50;   // vertical gap between rows
+  const startX   = (W - spacingX * (cfg.columns - 1) - 8 * px) / 2;
+  const startY   = 90;
+
+  let typeIdx = 0; // cycles through invader types left-to-right, top-to-bottom
+
+  for (let row = 0; row < cfg.rows; row++) {
+    for (let col = 0; col < cfg.columns; col++) {
+      const x = startX + col * spacingX;
+      const y = startY + row * spacingY;
+
+      // Decide whether this cell is a trap (Level 2 only, ~20% chance)
+      const isTrap = trapTypes.length > 0 && Math.random() < 0.2;
+      let t;
+      if (isTrap) {
+        t = trapTypes[Math.floor(Math.random() * trapTypes.length)];
+      } else {
+        t = allTypes[typeIdx % allTypes.length];
+        typeIdx++;
+      }
+      invaders.push(new Invader(x, y, t, isTrap));
+    }
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   GAME INITIALISATION
+   ──────────────────────────────────────────────────────────────── */
+function startGame() {
+  ensureAudio();
+  score      = 0;
+  level      = 1;
+  initLevel();
+}
+
+function initLevel() {
+  const cfg  = LEVEL_CONFIG[level];
+  player     = new Player(level);
+  bullets    = [];
+  enemyBullets = [];
+  particles  = [];
+  floatingTexts = [];
+  ufo        = null;
+  ufoTimer   = 300 + Math.random() * 400; // randomised UFO spawn delay
+  invaderDir = 1;
+  invaderStep = 0;
+  shootTimer = 0;
+  vomitMessage = '';
+  vomitMsgTimer = 0;
+  initStars();
+  initInvaders();
+  gameState  = STATE.PLAYING;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   SHOOTING – player fires bullets
+   ──────────────────────────────────────────────────────────────── */
+function tryShoot() {
+  if (player.shootCooldown > 0) return; // Still cooling down
+
+  const cx = player.x + player.w / 2 - 2; // centre the bullet on the player
+
+  if (player.tripleAtk) {
+    // Fire three bullets: centre + left + right
+    bullets.push(new Bullet(cx, player.y));
+    bullets.push(new Bullet(cx - 18, player.y + 4));
+    bullets.push(new Bullet(cx + 18, player.y + 4));
+    player.shootCooldown = 12;
+  } else {
+    bullets.push(new Bullet(cx, player.y));
+    player.shootCooldown = 16;
+  }
+  sfxShoot();
+}
+
+/* ────────────────────────────────────────────────────────────────
+   COLLISION DETECTION  (AABB)
+   Ref [5]: Two rectangles overlap when there is overlap on both axes.
+   We check: !(right1 < left2 || left1 > right2 || bottom1 < top2 || top1 > bottom2)
+   ──────────────────────────────────────────────────────────────── */
+function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+  return !(
+    ax + aw < bx ||  // A is entirely left of B
+    ax > bx + bw ||  // A is entirely right of B
+    ay + ah < by ||  // A is entirely above B
+    ay > by + bh     // A is entirely below B
+  );
+}
+
+/* ── Spawn explosion particles at (cx, cy) ────────────────────── */
+function spawnExplosion(cx, cy, color, count = 18) {
+  for (let i = 0; i < count; i++) {
+    particles.push(new Particle(cx, cy, color));
+  }
+}
+
+/* ── Trigger screen shake ─────────────────────────────────────── */
+function triggerShake(intensity = 6, duration = 18) {
+  shakeTimer     = duration;
+  shakeIntensity = intensity;
+}
+
+/* ────────────────────────────────────────────────────────────────
+   PLAYER HIT LOGIC
+   Dog/Cat: probabilistic vomit survival (saves the hit ~40% of time)
+   Rabbit: instant game over
+   ──────────────────────────────────────────────────────────────── */
+function handlePlayerHit(foodLabel) {
+  if (player.invincible) return; // Barrier absorbs the hit
+
+  triggerShake(8, 22);
+  sfxHurt();
+
+  if (level === 3) {
+    // Rabbit: no mercy – instant death
+    triggerGameOver();
+    return;
+  }
+
+  // Dog/Cat: 40% chance to "vomit" and survive with penalty
+  if (Math.random() < 0.40) {
+    // Vomit survival! Lose 1 HP (not a full life)
+    player.hp--;
+    player.hurtAnim = 40;
+    vomitMessage  = level === 1
+      ? `${foodLabel}...My tummy hurts~ 😢`
+      : `${foodLabel}...Ngh, awful! 🤢`;
+    vomitMsgTimer = 140;
+    // Spawn vomit particles
+    for (let i = 0; i < 12; i++) {
+      particles.push(new VomitParticle(
+        player.x + player.w / 2,
+        player.y
+      ));
+    }
+    if (player.hp <= 0) {
+      // HP depleted even with vomit mechanic
+      player.lives--;
+      player.hp = 5;
+      if (player.lives <= 0) triggerGameOver();
+    }
+  } else {
+    // Full hit – lose a life
+    player.lives--;
+    player.hp = 5;
+    player.hurtAnim = 60;
+    vomitMessage  = level === 1
+      ? `${foodLabel} is poison to dogs!! 💔`
+      : `${foodLabel} is toxic to cats!! 💔`;
+    vomitMsgTimer = 160;
+    if (player.lives <= 0) triggerGameOver();
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   UFO HIT – grant level-specific power-up
+   ──────────────────────────────────────────────────────────────── */
+function handleUFOHit() {
+  score += 500;
+  sfxPowerUp();
+  spawnExplosion(ufo.x + ufo.w / 2, ufo.y + ufo.h / 2, '#ff0', 30);
+  floatingTexts.push(new FloatingText('+500 POWER-UP!', ufo.x + ufo.w / 2, ufo.y, '#ff0'));
+
+  if (level === 1) {
+    // Bone → 3x Attack Power for 600 frames (~10 seconds)
+    player.tripleAtk   = true;
+    player.tripleTimer = 600;
+    floatingTexts.push(new FloatingText('3x ATTACK!!', W/2, 120, '#ff0'));
+  } else if (level === 2) {
+    // Matatabi → Invincibility Barrier + trivia
+    player.invincible  = true;
+    player.invincTimer = 700;
+    floatingTexts.push(new FloatingText('INVINCIBLE!!', W/2, 120, '#0ff'));
+    showTrivia();
+  } else {
+    // Timothy Hay → Speed Boost for 500 frames
+    player.speedBoost = true;
+    player.speedTimer = 500;
+    floatingTexts.push(new FloatingText('SPEED UP!!', W/2, 120, '#0f0'));
+  }
+
+  ufo.active = false;
+}
+
+/* ── Show trivia popup (Level 2 only) ────────────────────────── */
+function showTrivia() {
+  const box = document.getElementById('triviaBox');
+  document.getElementById('triviaText').innerText =
+    '"Did you know? Matatabi isn\'t just for intoxication! A 2021 study ' +
+    'revealed cats rub it to act as a natural mosquito repellent! ' +
+    'A true survival strategy!"';
+  box.style.display = 'block';
+  gameState = STATE.TRIVIA; // Pause game while trivia is shown
+}
+
+document.getElementById('triviaBtn').addEventListener('click', () => {
+  document.getElementById('triviaBox').style.display = 'none';
+  if (gameState === STATE.TRIVIA) gameState = STATE.PLAYING;
+});
+
+/* ────────────────────────────────────────────────────────────────
+   GAME OVER / LEVEL CLEAR
+   ──────────────────────────────────────────────────────────────── */
+function triggerGameOver() {
+  gameState = STATE.GAME_OVER;
+  sfxGameOver();
+}
+
+function triggerLevelClear() {
+  sfxLevelClear();
+  gameState      = STATE.LEVEL_CLEAR;
+  transitionTimer = 180; // show level-clear screen for 3 seconds
+}
+
+/* ────────────────────────────────────────────────────────────────
+   INVADER MOVEMENT
+   Classic Space Invaders: the formation moves sideways. When any
+   invader touches the screen edge, the whole formation steps down
+   and reverses direction.
+   ──────────────────────────────────────────────────────────────── */
+function updateInvaders() {
+  const cfg   = LEVEL_CONFIG[level];
+  const speed = cfg.invaderSpeed + (1 - invaders.length / 50) * 0.5; // speeds up as fewer remain
+
+  // Move all invaders horizontally
+  invaders.forEach(inv => {
+    if (!inv.active) return;
+    inv.x += speed * invaderDir;
+  });
+
+  // Check if any invader hit the left or right wall
+  let hitEdge = false;
+  invaders.forEach(inv => {
+    if (!inv.active) return;
+    if (inv.x <= 0 || inv.x + inv.w >= W) hitEdge = true;
+  });
+
+  if (hitEdge) {
+    invaderDir = -invaderDir; // reverse horizontal direction
+    invaders.forEach(inv => {
+      if (!inv.active) return;
+      inv.y += 18; // step the whole formation down one row
+    });
+  }
+
+  // Check if any invader has reached the bottom (player zone)
+  invaders.forEach(inv => {
+    if (!inv.active) return;
+    if (inv.y + inv.h >= player.y) {
+      handlePlayerHit(inv.type.toUpperCase());
+      inv.active = false; // food is consumed
+    }
+  });
+}
+
+/* ────────────────────────────────────────────────────────────────
+   ENEMY SHOOTING (Level 3 bullet hell)
+   ──────────────────────────────────────────────────────────────── */
+function updateEnemyShooting() {
+  const cfg = LEVEL_CONFIG[level];
+  shootTimer++;
+  if (shootTimer < cfg.shootInterval) return;
+  shootTimer = 0;
+
+  // Pick a random active invader to shoot from
+  const active = invaders.filter(i => i.active);
+  if (active.length === 0) return;
+
+  const shooter = active[Math.floor(Math.random() * active.length)];
+  const cx = shooter.x + shooter.w / 2;
+  const cy = shooter.y + shooter.h;
+
+  if (cfg.bulletHell) {
+    // Level 3: fire a spread of 5 bullets in a fan pattern
+    for (let i = -2; i <= 2; i++) {
+      const angle = (Math.PI / 2) + i * 0.28; // fan angle
+      enemyBullets.push(new EnemyBullet(
+        cx, cy,
+        Math.cos(angle) * 3,   // vx
+        Math.sin(angle) * 3    // vy
+      ));
+    }
+    // Extra random bullets for true bullet-hell density
+    if (active.length > 10) {
+      const r2 = active[Math.floor(Math.random() * active.length)];
+      enemyBullets.push(new EnemyBullet(r2.x + r2.w/2, r2.y + r2.h, 0, 4));
+    }
+  } else {
+    // Levels 1/2: single straight-down bullet
+    enemyBullets.push(new EnemyBullet(cx, cy, 0, 3.5));
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   MAIN UPDATE LOOP
+   Called once per frame via requestAnimationFrame.
+   Advances all game objects and checks collisions.
+   ──────────────────────────────────────────────────────────────── */
+function update() {
+  if (gameState !== STATE.PLAYING) return; // Only update when actually playing
+
+  // 1. Player input & state
+  player.update();
+  if (keys.has('Space') || keys.has('KeyZ')) tryShoot();
+
+  // 2. Bullets
+  bullets.forEach(b => b.update());
+  bullets = bullets.filter(b => b.active); // Remove dead bullets
+
+  // 3. Enemy bullets
+  enemyBullets.forEach(b => b.update());
+  enemyBullets = enemyBullets.filter(b => b.active);
+
+  // 4. Particles & floating texts
+  particles.forEach(p => p.update());
+  particles = particles.filter(p => p.life > 0);
+  floatingTexts.forEach(t => t.update());
+  floatingTexts = floatingTexts.filter(t => t.life > 0);
+
+  // 5. Invader movement + bottom-collision
+  updateInvaders();
+
+  // 6. Enemy shooting
+  updateEnemyShooting();
+
+  // 7. UFO
+  ufoTimer--;
+  if (ufoTimer <= 0 && !ufo) {
+    ufo      = new UFO(level);
+    ufoTimer = 400 + Math.random() * 500;
+  }
+  if (ufo) {
+    ufo.update();
+    if (!ufo.active) ufo = null;
+  }
+
+  // 8. Stars
+  updateStars();
+
+  // 9. Screen shake countdown
+  if (shakeTimer > 0) shakeTimer--;
+
+  // 10. Vomit message timer
+  if (vomitMsgTimer > 0) vomitMsgTimer--;
+
+  // ── Collision: player bullets vs invaders ────────────────────
+  bullets.forEach(b => {
+    invaders.forEach(inv => {
+      if (!b.active || !inv.active) return;
+      if (rectsOverlap(b.x, b.y, b.w, b.h, inv.x, inv.y, inv.w, inv.h)) {
+        // Bullet hits invader
+        b.active   = false;
+        inv.active = false;
+        score += inv.points;
+        spawnExplosion(inv.x + inv.w/2, inv.y + inv.h/2, '#f80', 16);
+        sfxExplode();
+        floatingTexts.push(new FloatingText(
+          `+${inv.points}`, inv.x + inv.w/2, inv.y, '#ff8800'
+        ));
+      }
+    });
+  });
+
+  // ── Collision: player bullets vs UFO ─────────────────────────
+  if (ufo) {
+    bullets.forEach(b => {
+      if (!b.active) return;
+      if (rectsOverlap(b.x, b.y, b.w, b.h, ufo.x, ufo.y, ufo.w, ufo.h)) {
+        b.active = false;
+        handleUFOHit();
+      }
+    });
+  }
+
+  // ── Collision: enemy bullets vs player ───────────────────────
+  enemyBullets.forEach(eb => {
+    if (!eb.active) return;
+    if (rectsOverlap(eb.x, eb.y, eb.w, eb.h, player.x, player.y, player.w, player.h)) {
+      eb.active = false;
+      handlePlayerHit('ENEMY FIRE');
+    }
+  });
+
+  // ── Check win condition ───────────────────────────────────────
+  if (invaders.every(i => !i.active)) {
+    triggerLevelClear();
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   LEVEL CLEAR TRANSITION
+   ──────────────────────────────────────────────────────────────── */
+function updateLevelClear() {
+  transitionTimer--;
+  if (transitionTimer <= 0) {
+    if (level < 3) {
+      level++;
+      initLevel();
+    } else {
+      // All levels complete → show final game-over / win screen
+      gameState = STATE.GAME_OVER;
+    }
+  }
+}
+
+/* ────────────────────────────────────────────────────────────────
+   DRAW / RENDER
+   ──────────────────────────────────────────────────────────────── */
+
+/** Apply screen-shake transform based on shakeTimer */
+function applyShake() {
+  if (shakeTimer <= 0) return;
+  const dx = (Math.random() - 0.5) * shakeIntensity;
+  const dy = (Math.random() - 0.5) * shakeIntensity;
+  ctx.translate(dx, dy); // shift canvas origin randomly
+}
+
+/** Draw HUD: score, lives, level, power-up timers */
+function drawHUD() {
+  ctx.font      = `${px * 2}px 'Press Start 2P', monospace`;
+  ctx.textAlign = 'left';
+
+  // Score
+  ctx.fillStyle   = '#fff';
+  ctx.shadowColor = '#0ff';
+  ctx.shadowBlur  = 6;
+  ctx.fillText(`SCORE ${score}`, 14, 24);
+
+  // Level badge
+  ctx.textAlign   = 'center';
+  const cfg       = LEVEL_CONFIG[level];
+  ctx.fillStyle   = cfg.color;
+  ctx.fillText(cfg.name, W / 2, 24);
+
+  // Lives indicator (draw tiny animal icons)
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#f55';
+  ctx.shadowColor = '#f00';
+  const lifeIcon = level === 1 ? '🐶' : level === 2 ? '🐱' : '🐰';
+  ctx.font = '16px sans-serif';
+  ctx.fillText(lifeIcon.repeat(player.lives), W - 14, 24);
+
+  ctx.font      = `${px * 2}px 'Press Start 2P', monospace`;
+  ctx.fillStyle = '#fff';
+  ctx.shadowBlur = 0;
+
+  // Power-up timer bars
+  let barY = 38;
+  if (player.tripleAtk) {
+    drawPowerBar('3x ATK', player.tripleTimer, 600, '#ff0', barY);
+    barY += 14;
+  }
+  if (player.invincible) {
+    drawPowerBar('SHIELD', player.invincTimer, 700, '#0ff', barY);
+    barY += 14;
+  }
+  if (player.speedBoost) {
+    drawPowerBar('SPEED', player.speedTimer, 500, '#0f0', barY);
+  }
+}
+
+/** Draw a small labelled progress bar for power-up duration */
+function drawPowerBar(label, current, max, color, y) {
+  const barW   = 140;
+  const barH   = 6;
+  const barX   = 14;
+  const fill   = (current / max) * barW;
+
+  ctx.fillStyle = '#333';
+  ctx.fillRect(barX, y, barW, barH);
+  ctx.fillStyle = color;
+  ctx.fillRect(barX, y, fill, barH);
+
+  ctx.font      = `${px * 1.5}px 'Press Start 2P', monospace`;
+  ctx.fillStyle = color;
+  ctx.textAlign = 'left';
+  ctx.fillText(label, barX + barW + 6, y + barH);
+}
+
+/** Draw a dividing line between HUD and play field */
+function drawGroundLine() {
+  ctx.strokeStyle = '#334';
+  ctx.lineWidth   = 1;
+  ctx.beginPath();
+  ctx.moveTo(0, 44);
+  ctx.lineTo(W, 44);
+  ctx.stroke();
+}
+
+/** Render all game objects in correct Z-order */
+function draw() {
+  ctx.clearRect(0, 0, W, H); // Erase previous frame
+
+  ctx.save(); // Isolate shake transform from rest of drawing
+  applyShake();
+
+  // Background stars
+  drawStars();
+
+  if (gameState === STATE.PLAYING || gameState === STATE.TRIVIA || gameState === STATE.PAUSED) {
+    drawGroundLine();
+    drawHUD();
+
+    // Draw all active invaders
+    invaders.forEach(inv => { if (inv.active) inv.draw(); });
+
+    // Draw player bullets
+    bullets.forEach(b => b.draw());
+
+    // Draw enemy bullets
+    enemyBullets.forEach(b => b.draw());
+
+    // Draw UFO
+    if (ufo) ufo.draw();
+
+    // Draw particles (explosions, vomit)
+    particles.forEach(p => p.draw());
+
+    // Draw floating text pop-ups
+    floatingTexts.forEach(t => t.draw());
+
+    // Draw player
+    player.draw();
+
+    // Vomit speech message
+    if (vomitMsgTimer > 0 && vomitMessage) {
+      const alpha = Math.min(1, vomitMsgTimer / 40);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle   = '#fff';
+      ctx.font        = `${px * 2}px 'Press Start 2P', monospace`;
+      ctx.textAlign   = 'center';
+      ctx.shadowColor = '#ff0';
+      ctx.shadowBlur  = 8;
+      ctx.fillText(vomitMessage, player.x + player.w / 2, player.y - 20);
+      ctx.restore();
+    }
+  }
+
+  ctx.restore(); // Pop shake transform
+
+  // Overlay screens (no shake applied)
+  if (gameState === STATE.TITLE)      drawTitle();
+  if (gameState === STATE.LEVEL_CLEAR) drawLevelClear();
+  if (gameState === STATE.GAME_OVER)  drawGameOver();
+  if (gameState === STATE.PAUSED)     drawPausedScreen();
+}
+
+function drawPausedScreen() {
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  ctx.font = `${px * 4}px 'Press Start 2P', monospace`;
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = '#fff';
+  ctx.shadowBlur = 10;
+  ctx.fillText('PAUSED', W/2, H/2);
+  ctx.shadowBlur = 0;
+}
+
+/* ── Title screen ─────────────────────────────────────────────── */
+function drawTitle() {
+  // Dark semi-transparent overlay
+  ctx.fillStyle = 'rgba(0,0,20,0.88)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Draw some background stars
+  drawStars();
+
+  const t = Date.now() / 1000;
+
+  ctx.textAlign   = 'center';
+  ctx.shadowBlur  = 20;
+
+  // Main title
+  ctx.font        = `${px * 4}px 'Press Start 2P', monospace`;
+  ctx.fillStyle   = '#0ff';
+  ctx.shadowColor = '#0ff';
+  ctx.fillText('ANIMAL SAFETY', W/2, 160);
+  ctx.fillStyle   = '#ff0';
+  ctx.shadowColor = '#ff0';
+  ctx.fillText('DEFENDER', W/2, 220);
+
+  ctx.shadowBlur = 0;
+
+  // Subtitle
+  ctx.font      = `${px * 1.5}px 'Press Start 2P', monospace`;
+  ctx.fillStyle = '#aaa';
+  ctx.fillText('A HOMAGE TO SPACE INVADERS', W/2, 270);
+
+  // Animated animal icons
+  const y2 = 320 + Math.sin(t * 2) * 8;
+  ctx.font  = '36px sans-serif';
+  ctx.fillText('🐶  🐱  🐇', W/2, y2);
+
+  // Start prompt (blink every second)
+  if (Math.floor(t * 2) % 2 === 0) {
+    ctx.font      = `${px * 2}px 'Press Start 2P', monospace`;
+    ctx.fillStyle = '#0ff';
+    ctx.shadowColor = '#0ff';
+    ctx.shadowBlur  = 8;
+    ctx.fillText('PRESS SPACE TO START', W/2, 420);
+    ctx.shadowBlur = 0;
+  }
+
+  // Controls
+  ctx.font      = `${px * 1.5}px 'Press Start 2P', monospace`;
+  ctx.fillStyle = '#666';
+  ctx.fillText('← → MOVE     SPACE / Z SHOOT', W/2, 510);
+
+  // Copyright notice
+  ctx.font      = `${px * 1.2}px 'Press Start 2P', monospace`;
+  ctx.fillStyle = '#444';
+  ctx.fillText('INSPIRED BY SPACE INVADERS (TOMOHIRO NISHIKADO, 1978)', W/2, 570);
+}
+
+/* ── Level clear screen ───────────────────────────────────────── */
+function drawLevelClear() {
+  ctx.fillStyle = 'rgba(0,0,20,0.78)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign   = 'center';
+  ctx.font        = `${px * 4}px 'Press Start 2P', monospace`;
+  ctx.fillStyle   = '#0f0';
+  ctx.shadowColor = '#0f0';
+  ctx.shadowBlur  = 20;
+  ctx.fillText('STAGE CLEAR!', W/2, H/2 - 40);
+
+  ctx.font        = `${px * 2}px 'Press Start 2P', monospace`;
+  ctx.fillStyle   = '#ff0';
+  ctx.shadowColor = '#ff0';
+  ctx.fillText(`SCORE: ${score}`, W/2, H/2 + 20);
+
+  if (level < 3) {
+    ctx.font      = `${px * 1.5}px 'Press Start 2P', monospace`;
+    ctx.fillStyle = '#0ff';
+    ctx.shadowColor = '#0ff';
+    ctx.fillText(`NEXT: ${LEVEL_CONFIG[level+1].name}`, W/2, H/2 + 60);
+  }
+  ctx.shadowBlur = 0;
+}
+
+/* ── Game over / win screen ───────────────────────────────────── */
+function drawGameOver() {
+  ctx.fillStyle = 'rgba(0,0,0,0.85)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.textAlign = 'center';
+  ctx.shadowBlur = 20;
+
+  const allClear = level === 3 && invaders.every(i => !i.active);
+
+  if (allClear) {
+    ctx.font      = `${px * 4}px 'Press Start 2P', monospace`;
+    ctx.fillStyle = '#ff0';
+    ctx.shadowColor = '#ff0';
+    ctx.fillText('YOU WIN!!', W/2, H/2 - 80);
+    ctx.font      = `${px * 2}px 'Press Start 2P', monospace`;
+    ctx.fillStyle = '#0ff';
+    ctx.shadowColor = '#0ff';
+    ctx.fillText('ALL ANIMALS ARE SAFE!', W/2, H/2 - 20);
+  } else {
+    ctx.font      = `${px * 4}px 'Press Start 2P', monospace`;
+    ctx.fillStyle = '#f00';
+    ctx.shadowColor = '#f00';
+    ctx.fillText('GAME OVER', W/2, H/2 - 80);
+
+    if (level === 3) {
+      ctx.font      = `${px * 1.5}px 'Press Start 2P', monospace`;
+      ctx.fillStyle = '#f88';
+      ctx.shadowColor = '#f88';
+      ctx.fillText('ONE MISTAKE IS FATAL FOR RABBITS.', W/2, H/2 - 20);
+      ctx.fillText('THEIR DIGESTIVE SYSTEM IS EXTREMELY SENSITIVE.', W/2, H/2 + 10);
+    }
+  }
+
+  ctx.font      = `${px * 2}px 'Press Start 2P', monospace`;
+  ctx.fillStyle = '#ff0';
+  ctx.shadowColor = '#ff0';
+  ctx.fillText(`FINAL SCORE: ${score}`, W/2, H/2 + 60);
+
+  const t = Date.now() / 1000;
+  if (Math.floor(t * 2) % 2 === 0) {
+    ctx.font      = `${px * 1.5}px 'Press Start 2P', monospace`;
+    ctx.fillStyle = '#0ff';
+    ctx.shadowColor = '#0ff';
+    ctx.fillText('PRESS SPACE TO RETRY', W/2, H/2 + 110);
+  }
+
+  ctx.shadowBlur = 0;
+}
+
+/* ── Restart from game-over ───────────────────────────────────── */
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space' && gameState === STATE.GAME_OVER) {
+    startGame();
+  }
+});
+
+/* ────────────────────────────────────────────────────────────────
+   MAIN GAME LOOP  (Ref [2])
+   requestAnimationFrame schedules our loop to run before the next
+   browser repaint, giving us a smooth 60 fps animation.
+   The browser passes a high-resolution timestamp to the callback,
+   but here we keep timing simple (1 update per frame).
+   ──────────────────────────────────────────────────────────────── */
+function gameLoop() {
+  // Advance game logic
+  if (gameState === STATE.PLAYING) {
+    update();
+  } else if (gameState === STATE.LEVEL_CLEAR) {
+    updateStars();
+    updateLevelClear();
+  } else if (gameState === STATE.TITLE) {
+    updateStars();
+  }
+
+  // Render current frame
+  draw();
+
+  // Schedule the next frame (Ref [2]: this is the core of every JS game loop)
+  requestAnimationFrame(gameLoop);
+}
+
+/* ── Bootstrap ────────────────────────────────────────────────── */
+initStars();           // Pre-populate stars before title shows
+gameLoop();            // Kick off the animation loop
+
+</script>
+</body>
+</html>
