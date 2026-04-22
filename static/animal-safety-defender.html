@@ -1315,13 +1315,14 @@ function handleUFOHit() {
     // Bone → 3x Attack Power for 600 frames (~10 seconds)
     player.tripleAtk   = true;
     player.tripleTimer = 600;
-    floatingTexts.push(new FloatingText('3x ATTACK!!', W/2, 120, '#ff0'));
+    floatingTexts.push(new FloatingText('POPCORN MODE!!', W/2, 120, '#ff0'));
+    showTrivia('★豆知識★ 犬は「肉球の間」にしか汗腺がありません。この汗と常在菌が混ざることで、足の裏から「ポップコーン」のような独特の匂いがするんです！\n🍿POPCORN MODE 攻撃力3倍！🍿');
   } else if (level === 2) {
     // Matatabi → Invincibility Barrier + trivia
     player.invincible  = true;
     player.invincTimer = 700;
     floatingTexts.push(new FloatingText('INVINCIBLE!!', W/2, 120, '#0ff'));
-    showTrivia();
+    showTrivia('★豆知識★ マタタビの効果は「寄って酔っぱらう」だけじゃありません！\n2021年の研究で、猫はマタタビを体に擦り付けることで天然の「蚊よけ（虫除け）」をしていることが判明しました！');
   } else {
     // Timothy Hay → Speed Boost for 500 frames
     player.speedBoost = true;
@@ -1332,13 +1333,10 @@ function handleUFOHit() {
   ufo.active = false;
 }
 
-/* ── Show trivia popup (Level 2 only) ────────────────────────── */
-function showTrivia() {
+/* ── Show trivia popup ────────────────────────── */
+function showTrivia(text) {
   const box = document.getElementById('triviaBox');
-  document.getElementById('triviaText').innerText =
-    '"Did you know? Matatabi isn\'t just for intoxication! A 2021 study ' +
-    'revealed cats rub it to act as a natural mosquito repellent! ' +
-    'A true survival strategy!"';
+  document.getElementById('triviaText').innerText = text;
   box.style.display = 'block';
   gameState = STATE.TRIVIA; // Pause game while trivia is shown
 }
@@ -1597,7 +1595,7 @@ function drawHUD() {
   // Power-up timer bars
   let barY = 38;
   if (player.tripleAtk) {
-    drawPowerBar('3x ATK', player.tripleTimer, 600, '#ff0', barY);
+    drawPowerBar('POPCORN', player.tripleTimer, 600, '#ff0', barY);
     barY += 14;
   }
   if (player.invincible) {
