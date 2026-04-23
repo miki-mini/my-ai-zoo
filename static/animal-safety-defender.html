@@ -164,7 +164,10 @@
       <div class="touch-btn" id="btnLeft">←</div>
       <div class="touch-btn" id="btnRight">→</div>
     </div>
-    <div class="touch-btn" id="btnShoot">A</div>
+    <div style="display: flex; gap: 10px;">
+      <div class="touch-btn" id="btnAi" style="font-size: 14px; font-weight: bold; background: rgba(255,50,50,0.3); border-color: #f55; color: #f55; box-shadow: 0 0 10px #f55; width: 80px;">AUTO</div>
+      <div class="touch-btn" id="btnShoot">A</div>
+    </div>
   </div>
 
   <button id="pauseBtn" style="position: absolute; top: 10px; right: 10px; z-index: 30; background: rgba(0,0,0,0.5); border: 2px solid #0ff; color: #0ff; font-family: 'Press Start 2P', monospace; padding: 10px; cursor: pointer;">PAUSE</button>
@@ -335,6 +338,7 @@ let level         = 1;   // 1=Dog, 2=Cat, 3=Rabbit
 let shakeTimer    = 0;   // Screen-shake countdown in frames
 let shakeIntensity= 6;   // Pixels of max shake displacement
 let transitionTimer = 0; // Frames to show level clear screen
+let aiMode        = false; // Auto-Pilot AI mode
 
 /* ────────────────────────────────────────────────────────────────
    INPUT HANDLING  (Ref [4])
@@ -380,6 +384,10 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyP' || e.code === 'Escape') {
     togglePause();
   }
+  // Toggle AI Auto-Pilot
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+    toggleAI();
+  }
 });
 window.addEventListener('keyup',  e => keys.delete(e.code));
 
@@ -395,6 +403,15 @@ document.getElementById('pauseBtn').addEventListener('touchstart', (e) => {
   e.preventDefault();
   togglePause();
 }, {passive: false});
+
+function toggleAI() {
+  aiMode = !aiMode;
+}
+const btnAi = document.getElementById('btnAi');
+if (btnAi) {
+  btnAi.addEventListener('click', toggleAI);
+  btnAi.addEventListener('touchstart', (e) => { e.preventDefault(); toggleAI(); }, {passive: false});
+}
 
 /* ────────────────────────────────────────────────────────────────
    PIXEL-ART DRAWING HELPERS
@@ -740,10 +757,15 @@ class Player {
   /** Move left/right based on held keys */
   update() {
     // Determine movement speed (with optional boost)
-    const spd = this.speedBoost ? this.speed * 2.5 : this.speed;
+    const baseSpd = this.speedBoost ? this.speed * 2.5 : this.speed;
+    const spd = aiMode ? baseSpd * 2.5 : baseSpd; // AI has superhuman speed
 
-    if (keys.has('ArrowLeft')  && this.x > 0)      this.x -= spd;
-    if (keys.has('ArrowRight') && this.x + this.w < W) this.x += spd;
+    if (aiMode) {
+      computeAI(this, spd);
+    } else {
+      if (keys.has('ArrowLeft')  && this.x > 0)      this.x -= spd;
+      if (keys.has('ArrowRight') && this.x + this.w < W) this.x += spd;
+    }
 
     // Count down power-up timers each frame
     if (this.invincTimer  > 0) { this.invincTimer--;  if (this.invincTimer  === 0) this.invincible  = false; }
@@ -811,6 +833,81 @@ class Player {
     }
 
     ctx.restore();
+  }
+}
+
+function computeAI(p, spd) {
+  let targetX_ideal = p.x;
+  let maxInvY = -1;
+  let target = null;
+  for (let inv of invaders) {
+    if (inv.active && inv.y > maxInvY) {
+      maxInvY = inv.y;
+      target = inv;
+    }
+  }
+  if (ufo && ufo.active) target = ufo;
+  if (target) {
+    targetX_ideal = target.x + target.w/2 - p.w/2;
+  }
+
+  const LOOK_AHEAD = level === 3 ? 50 : 30;
+
+  function getDangerScore(moveDir) {
+    let score = 0;
+    let simX = p.x;
+    for (let t = 1; t <= LOOK_AHEAD; t++) {
+      simX += moveDir * spd;
+      if (simX < 0) simX = 0;
+      if (simX + p.w > W) simX = W - p.w;
+
+      for (let b of enemyBullets) {
+        if (!b.active) continue;
+        let bx = b.x + (b.vx || 0) * t;
+        let by = b.y + b.vy * t;
+        if (rectsOverlap(simX + 2, p.y + 2, p.w - 4, p.h - 4, bx, by, b.w, b.h)) {
+          score += t <= 6 ? 8000 : t <= 15 ? 3000 : (1500 - t * 20);
+        }
+      }
+      for (let inv of invaders) {
+        if (!inv.active) continue;
+        let iy = inv.y + 0.5 * t;
+        if (rectsOverlap(simX - 4, p.y - 4, p.w + 8, p.h + 8, inv.x, iy, inv.w, inv.h)) {
+          score += (1000 - t * 25);
+        }
+      }
+    }
+    score += Math.abs(simX - targetX_ideal) * 0.1;
+    return score;
+  }
+
+  if (level === 3) {
+    // Bullet hell: 9 fractional directions to find gaps in fan-spread bullets
+    const candidates = [-1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1];
+    let bestDir = 0, minScore = Infinity;
+    for (let c of candidates) {
+      const sc = getDangerScore(c);
+      if (sc < minScore) { minScore = sc; bestDir = c; }
+    }
+    p.x = Math.max(0, Math.min(p.x + bestDir * spd, W - p.w));
+    tryShoot(); // Invaders fill the screen — always shoot
+  } else {
+    let scoreLeft = getDangerScore(-1);
+    let scoreStay = getDangerScore(0);
+    let scoreRight = getDangerScore(1);
+    let bestMove = 0;
+    let minScore = scoreStay;
+    if (scoreLeft < minScore) { minScore = scoreLeft; bestMove = -1; }
+    if (scoreRight < minScore) { minScore = scoreRight; bestMove = 1; }
+    if (bestMove === -1 && p.x > 0) p.x -= spd;
+    if (bestMove === 1 && p.x + p.w < W) p.x += spd;
+    if (target) {
+      const tc = target.x + target.w/2;
+      const pc = p.x + p.w/2;
+      if (Math.abs(tc - pc) < p.w + 15) tryShoot();
+    } else {
+      tryShoot();
+    }
   }
 }
 
@@ -1581,16 +1678,27 @@ function drawHUD() {
   ctx.fillText(cfg.name, W / 2, 24);
 
   // Lives indicator (draw tiny animal icons)
-  ctx.textAlign = 'right';
+  ctx.textAlign = 'left';
   ctx.fillStyle = '#f55';
   ctx.shadowColor = '#f00';
   const lifeIcon = level === 1 ? '🐶' : level === 2 ? '🐱' : '🐰';
   ctx.font = '16px sans-serif';
-  ctx.fillText(lifeIcon.repeat(player.lives), W - 14, 24);
+  ctx.fillText(lifeIcon.repeat(player.lives), 150, 24);
 
   ctx.font      = `${px * 2}px 'Press Start 2P', monospace`;
   ctx.fillStyle = '#fff';
   ctx.shadowBlur = 0;
+
+  // AI Auto-Pilot Indicator
+  if (aiMode && Math.floor(Date.now() / 300) % 2 === 0) {
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#f55';
+    ctx.shadowColor = '#f00';
+    ctx.shadowBlur = 10;
+    ctx.fillText('🤖 AI AUTO-PILOT', W / 2, 60);
+    ctx.shadowBlur = 0;
+    ctx.textAlign = 'left';
+  }
 
   // Power-up timer bars
   let barY = 38;
