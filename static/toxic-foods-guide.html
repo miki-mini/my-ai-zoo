@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アニマル・セーフティ大辞典 - 食べてはいけないもの</title>
+
+  <!-- Google Fonts: Press Start 2P & Noto Sans JP -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-color: #111;
+      --text-color: #eee;
+      --accent-color: #0ff;
+      --card-bg: #222;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Noto Sans JP', sans-serif;
+      line-height: 1.6;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 20px 0;
+      border-bottom: 4px dashed var(--accent-color);
+    }
+
+    h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 24px;
+      color: var(--accent-color);
+      text-shadow: 0 0 10px var(--accent-color);
+      margin-bottom: 15px;
+      line-height: 1.5;
+    }
+
+    .subtitle {
+      color: #aaa;
+      font-size: 14px;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .food-card {
+      background: var(--card-bg);
+      border: 2px solid #444;
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .food-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--accent-color);
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+    }
+
+    .sprite-container {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 15px;
+      background: #000;
+      border: 2px solid #555;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .food-name {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      color: #ff5555;
+      margin-bottom: 15px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .food-desc {
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .target-tags {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .tag {
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: bold;
+      color: #fff;
+    }
+    .tag.dog { background: #f5c518; color: #000; }
+    .tag.cat { background: #88cc44; color: #000; }
+    .tag.rabbit { background: #ff4488; }
+    .tag.all { background: #ff4444; }
+
+    .back-btn {
+      display: inline-block;
+      margin-top: 40px;
+      padding: 15px 30px;
+      background: rgba(0, 255, 255, 0.1);
+      border: 2px solid var(--accent-color);
+      color: var(--accent-color);
+      text-decoration: none;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 14px;
+      border-radius: 8px;
+      transition: all 0.3s;
+      text-align: center;
+    }
+
+    .back-btn:hover {
+      background: var(--accent-color);
+      color: #000;
+      box-shadow: 0 0 20px var(--accent-color);
+    }
+
+    .center {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>TOXIC FOODS DICTIONARY</h1>
+    <p class="subtitle">アニマル・セーフティ・ディフェンダー 大辞典<br>どうしてこの食べ物は動物にあげちゃダメなの？</p>
+  </header>
+
+  <div class="grid-container" id="dictionary">
+    <!-- Cards will be injected by JS -->
+  </div>
+
+  <div class="center">
+    <a href="index.html" class="back-btn">← RETURN TO PORTAL</a>
+  </div>
+
+  <script>
+    // 1. Sprite Grids
+    const CHOC_GRID = [
+      ['#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317'],
+      ['#5c3317','#7b4826','#7b4826','#7b4826','#7b4826','#7b4826','#7b4826','#5c3317'],
+      ['#7b4826','#a0622f','#5c3317','#a0622f','#a0622f','#5c3317','#a0622f','#7b4826'],
+      ['#7b4826','#a0622f','#5c3317','#a0622f','#a0622f','#5c3317','#a0622f','#7b4826'],
+      ['#7b4826','#a0622f','#7b4826','#7b4826','#7b4826','#7b4826','#a0622f','#7b4826'],
+      ['#7b4826','#a0622f','#a0622f','#a0622f','#a0622f','#a0622f','#a0622f','#7b4826'],
+      ['#5c3317','#7b4826','#7b4826','#7b4826','#7b4826','#7b4826','#7b4826','#5c3317'],
+      ['#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317','#5c3317'],
+    ];
+
+    const ONION_GRID = [
+      ['.','.','.','#a0522d','#a0522d','.','.','.'],
+      ['.','.','.','#d4a017','#d4a017','.','.','.'],
+      ['.','.','#d4a017','#f5e06a','#f5e06a','#d4a017','.','.'],
+      ['.','#d4a017','#f5e06a','#fffacd','#fffacd','#f5e06a','#d4a017','.'],
+      ['.','#d4a017','#f5e06a','#fffacd','#fffacd','#f5e06a','#d4a017','.'],
+      ['.','.','#d4a017','#f5e06a','#f5e06a','#d4a017','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+    ];
+
+    const GRAPE_GRID = [
+      ['.','.','.','#4a4a4a','#4a4a4a','.','.','.'],
+      ['.','.','.','.','.','.','.'],
+      ['.','#7b2fbe','#7b2fbe','.','#7b2fbe','#7b2fbe','.'],
+      ['#7b2fbe','#9b4fd4','#7b2fbe','#7b2fbe','#7b2fbe','#9b4fd4','#7b2fbe','.'],
+      ['#7b2fbe','#9b4fd4','#7b2fbe','#7b2fbe','#7b2fbe','#9b4fd4','#7b2fbe','.'],
+      ['.','#7b2fbe','#7b2fbe','#7b2fbe','#7b2fbe','#7b2fbe','.','.'],
+      ['.','.','#7b2fbe','#9b4fd4','#7b2fbe','.','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+    ];
+
+    const LILY_GRID = [
+      ['.','#ff69b4','.','.','.','.','#ff69b4','.'],
+      ['#ff69b4','#ffb6c1','#ff69b4','.','#ff69b4','#ffb6c1','#ff69b4','.'],
+      ['.','#ff69b4','.','.','.','.','#ff69b4','.'],
+      ['.','.','.','.','.','.','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+      ['.','.','#228b22','.','.','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+    ];
+
+    const SQUID_GRID = [
+      ['.','.','.','#f0e0d0','#f0e0d0','.','.','.'],
+      ['.','.','#f0e0d0','#ffe4c4','#ffe4c4','#f0e0d0','.','.'],
+      ['.','#f0e0d0','#ffe4c4','#ffd5b0','#ffd5b0','#ffe4c4','#f0e0d0','.'],
+      ['#c0a080','#ffe4c4','#ffd5b0','#ffe4c4','#ffe4c4','#ffd5b0','#ffe4c4','#c0a080'],
+      ['#c0a080','#ffe4c4','#ffe4c4','#ffe4c4','#ffe4c4','#ffe4c4','#ffe4c4','#c0a080'],
+      ['#c0a080','.','#c0a080','.','#c0a080','.','#c0a080','.'],
+      ['#c0a080','.','#c0a080','.','#c0a080','.','#c0a080','.'],
+      ['.','.','.','.','.','.','.','.'],
+    ];
+
+    const MILK_GRID = [
+      ['.','.','.','#fff','#fff','.','.','.'],
+      ['.','.','#ddd','#fff','#fff','#ddd','.','.'],
+      ['.','#ddd','#fff','#fff','#fff','#fff','#ddd','.'],
+      ['.','#ddd','#fff','#4fc','#4fc','#fff','#ddd','.'],
+      ['.','#ddd','#fff','#fff','#fff','#fff','#ddd','.'],
+      ['.','#ddd','#fff','#fff','#fff','#fff','#ddd','.'],
+      ['.','#ddd','#ddd','#ddd','#ddd','#ddd','#ddd','.'],
+      ['.','.','.','.','.','.','.','.'],
+    ];
+
+    const TUNA_GRID = [
+      ['.','.','.','.','.','.','.'],
+      ['.','#c0c0c0','#c0c0c0','#c0c0c0','#c0c0c0','#c0c0c0','.'],
+      ['#a0a0a0','#e0e0e0','#ff8c00','#ff8c00','#ff8c00','#e0e0e0','#a0a0a0'],
+      ['#a0a0a0','#e0e0e0','#ffa040','#ffa040','#ffa040','#e0e0e0','#a0a0a0'],
+      ['#a0a0a0','#e0e0e0','#ff8c00','#ff8c00','#ff8c00','#e0e0e0','#a0a0a0'],
+      ['.','#c0c0c0','#c0c0c0','#c0c0c0','#c0c0c0','#c0c0c0','.'],
+      ['.','.','.','.','.','.','.'],
+      ['.','.','.','.','.','.','.'],
+    ];
+
+    const BREAD_GRID = [
+      ['.','.','#d4a55a','#d4a55a','#d4a55a','#d4a55a','.','.'],
+      ['.','#d4a55a','#e8c080','#e8c080','#e8c080','#e8c080','#d4a55a','.'],
+      ['#d4a55a','#e8c080','#c0621c','#e8c080','#e8c080','#c0621c','#e8c080','#d4a55a'],
+      ['#d4a55a','#e8c080','#e8c080','#c0621c','#c0621c','#e8c080','#e8c080','#d4a55a'],
+      ['#d4a55a','#e8c080','#e8c080','#c0621c','#c0621c','#e8c080','#e8c080','#d4a55a'],
+      ['#d4a55a','#e8c080','#c0621c','#e8c080','#e8c080','#c0621c','#e8c080','#d4a55a'],
+      ['.','#d4a55a','#e8c080','#e8c080','#e8c080','#e8c080','#d4a55a','.'],
+      ['.','.','#d4a55a','#d4a55a','#d4a55a','#d4a55a','.','.'],
+    ];
+
+    const POTATO_GRID = [
+      ['.','.','.','.','#88aa44','.','.','.',],
+      ['.','.','.','#88aa44','#aacc55','#88aa44','.','.'],
+      ['.','.','.','.','.','.','.'],
+      ['.','#c8a050','#c8a050','#c8a050','#c8a050','#c8a050','.'],
+      ['#c8a050','#e8c070','#c8a050','#c8a050','#c8a050','#e8c070','#c8a050'],
+      ['#c8a050','#e8c070','#c8a050','#c8a050','#c8a050','#e8c070','#c8a050'],
+      ['.','#c8a050','#c8a050','#c8a050','#c8a050','#c8a050','.'],
+      ['.','.','.','.','.','.','.','.'],
+    ];
+
+    const GARLIC_GRID = [
+      ['.','.','.','#88aa44','#88aa44','.','.','.'],
+      ['.','.','#d4d4c0','#e8e8d4','#e8e8d4','#d4d4c0','.','.'],
+      ['.','#d4d4c0','#e8e8d4','#fff8f0','#fff8f0','#e8e8d4','#d4d4c0','.'],
+      ['#d4d4c0','#e8e8d4','#fff8f0','#e8e8d4','#e8e8d4','#fff8f0','#e8e8d4','#d4d4c0'],
+      ['#d4d4c0','#e8e8d4','#e8e8d4','#e8e8d4','#e8e8d4','#e8e8d4','#e8e8d4','#d4d4c0'],
+      ['.','#d4d4c0','#e8e8d4','#e8e8d4','#e8e8d4','#e8e8d4','#d4d4c0','.'],
+      ['.','.','#d4d4c0','#d4d4c0','#d4d4c0','#d4d4c0','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+    ];
+
+    const SPINACH_GRID = [
+      ['.','.','.','.','.','.','.'],
+      ['.','#228b22','#2d9b2d','.','#228b22','.','.'],
+      ['#228b22','#33bb33','#2d9b2d','#228b22','#33bb33','#228b22','.'],
+      ['#228b22','#33bb33','#33bb33','#33bb33','#33bb33','#228b22','.'],
+      ['.','#228b22','#33bb33','#33bb33','#228b22','.','.','.'],
+      ['.','.','#228b22','#228b22','.','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+    ];
+
+    const NUT_GRID = [
+      ['.','.','.','.','.','.','.','.'],
+      ['.','.','.','#8b6914','#8b6914','.','.','.'],
+      ['.','.','#c8a040','#d4b050','#d4b050','#c8a040','.','.'],
+      ['.','#c8a040','#d4b050','#e8c060','#e8c060','#d4b050','#c8a040','.'],
+      ['.','#c8a040','#d4b050','#e8c060','#e8c060','#d4b050','#c8a040','.'],
+      ['.','.','#c8a040','#d4b050','#d4b050','#c8a040','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+      ['.','.','.','.','.','.','.','.'],
+    ];
+
+    // 2. Data
+    const foods = [
+      {
+        name: "チョコレート",
+        grid: CHOC_GRID,
+        tags: [{class: "all", label: "全動物NG"}],
+        desc: "カカオに含まれる「テオブロミン」が中枢神経を刺激し、嘔吐、痙攣、最悪の場合は心不全を引き起こす猛毒です。"
+      },
+      {
+        name: "タマネギ・ネギ類",
+        grid: ONION_GRID,
+        tags: [{class: "all", label: "全動物NG"}],
+        desc: "赤血球を破壊する成分が含まれており、重度の貧血（溶血性貧血）や血尿を引き起こします。加熱しても毒性は消えません。"
+      },
+      {
+        name: "ぶどう・レーズン",
+        grid: GRAPE_GRID,
+        tags: [{class: "dog", label: "🐶 犬NG"}],
+        desc: "原因物質は完全には解明されていませんが、犬が食べると急性腎不全を引き起こすことがあり、最悪の場合死に至ります。"
+      },
+      {
+        name: "ユリの花",
+        grid: LILY_GRID,
+        tags: [{class: "cat", label: "🐱 猫NG"}],
+        desc: "猫にとって非常に危険。花粉、葉、茎、花瓶の水でさえも猛毒となり、重篤な急性腎障害を引き起こします。"
+      },
+      {
+        name: "生のイカ・タコ",
+        grid: SQUID_GRID,
+        tags: [{class: "cat", label: "🐱 猫NG"}, {class: "dog", label: "🐶 犬NG"}],
+        desc: "チアミナーゼという酵素がビタミンB1を破壊し、急性ビタミンB1欠乏症（ふらつき、痙攣など）を引き起こします。"
+      },
+      {
+        name: "牛乳 (人間用)",
+        grid: MILK_GRID,
+        tags: [{class: "cat", label: "🐱 猫注意"}, {class: "dog", label: "🐶 犬注意"}],
+        desc: "多くの犬や猫は乳糖を分解する酵素（ラクターゼ）が少なく、下痢や消化不良の原因になります。専用のミルクを与えましょう。"
+      },
+      {
+        name: "ツナ缶 (人間用)",
+        grid: TUNA_GRID,
+        tags: [{class: "cat", label: "🐱 猫注意"}],
+        desc: "塩分と油分が多すぎるため、内臓に負担がかかります。また、ツナばかり与えると「黄色脂肪症」という病気になるリスクがあります。"
+      },
+      {
+        name: "パン・クッキー",
+        grid: BREAD_GRID,
+        tags: [{class: "rabbit", label: "🐰 うさぎNG"}],
+        desc: "炭水化物や糖質が多すぎ、腸内環境を破壊して「うっ滞（胃腸機能低下）」を引き起こします。草食動物には致命的です。"
+      },
+      {
+        name: "じゃがいもの芽",
+        grid: POTATO_GRID,
+        tags: [{class: "all", label: "全動物NG"}],
+        desc: "ソラニンという毒素が含まれており、嘔吐や下痢、神経症状を引き起こします。体の小さな動物には人間以上に危険です。"
+      },
+      {
+        name: "ガーリック (にんにく)",
+        grid: GARLIC_GRID,
+        tags: [{class: "all", label: "全動物NG"}],
+        desc: "タマネギと同様に赤血球を破壊する成分が含まれています。特に猫は犬よりも敏感で、少量でも中毒を起こす可能性があります。"
+      },
+      {
+        name: "ほうれん草",
+        grid: SPINACH_GRID,
+        tags: [{class: "rabbit", label: "🐰 うさぎ注意"}],
+        desc: "シュウ酸が多く含まれており、カルシウムと結合して結石を作りやすくし、腎臓や泌尿器に深刻なダメージを与えます。"
+      },
+      {
+        name: "マカダミアナッツ",
+        grid: NUT_GRID,
+        tags: [{class: "dog", label: "🐶 犬NG"}],
+        desc: "犬にとって有毒。嘔吐、発熱、後ろ足の麻痺や歩行困難を引き起こします。原因となる成分はまだ特定されていません。"
+      }
+    ];
+
+    // 3. Render logic
+    const container = document.getElementById('dictionary');
+
+    function drawPixelArt(canvas, grid) {
+      const ctx = canvas.getContext('2d');
+      const px = 6; // pixel size for display
+      const w = grid[0].length * px;
+      const h = grid.length * px;
+      
+      canvas.width = w;
+      canvas.height = h;
+
+      grid.forEach((row, y) => {
+        row.forEach((col, x) => {
+          if (col !== '.') {
+            ctx.fillStyle = col;
+            ctx.fillRect(x * px, y * px, px, px);
+          }
+        });
+      });
+    }
+
+    foods.forEach((food, index) => {
+      // Create card
+      const card = document.createElement('div');
+      card.className = 'food-card';
+
+      // Sprite container
+      const spriteContainer = document.createElement('div');
+      spriteContainer.className = 'sprite-container';
+      const canvas = document.createElement('canvas');
+      spriteContainer.appendChild(canvas);
+      drawPixelArt(canvas, food.grid);
+
+      // Name
+      const nameEl = document.createElement('h3');
+      nameEl.className = 'food-name';
+      nameEl.textContent = food.name;
+
+      // Tags
+      const tagsEl = document.createElement('div');
+      tagsEl.className = 'target-tags';
+      food.tags.forEach(t => {
+        const span = document.createElement('span');
+        span.className = `tag ${t.class}`;
+        span.textContent = t.label;
+        tagsEl.appendChild(span);
+      });
+
+      // Description
+      const descEl = document.createElement('p');
+      descEl.className = 'food-desc';
+      descEl.textContent = food.desc;
+      descEl.style.marginTop = '15px';
+
+      // Assemble
+      card.appendChild(spriteContainer);
+      card.appendChild(nameEl);
+      card.appendChild(tagsEl);
+      card.appendChild(descEl);
+
+      container.appendChild(card);
+    });
+
+  </script>
+</body>
+</html>
