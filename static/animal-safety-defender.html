@@ -741,8 +741,8 @@ class Player {
     this.x      = W / 2 - this.w / 2; // start centred
     this.y      = H - this.h - 20;    // near the bottom
     this.speed  = 4;          // pixels per frame
-    this.lives  = 3;          // starting lives
-    this.maxLives = 3;
+    this.lives  = lvl === 3 ? 1 : 3;  // starting lives (Rabbit has 1 life)
+    this.maxLives = lvl === 3 ? 1 : 3;
     this.level  = lvl;        // which level (1/2/3)
     this.invincible   = false; // Matatabi barrier active?
     this.invincTimer  = 0;     // frames remaining for invincibility
