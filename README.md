@@ -10,6 +10,14 @@
 [![Demo Portal](https://img.shields.io/badge/🚀-Live_Demo-blue)](https://usagi-oekaki-service-1032484155743.asia-northeast1.run.app)
 [![API Docs](https://img.shields.io/badge/📖-Swagger_UI-green)](https://usagi-oekaki-service-1032484155743.asia-northeast1.run.app/docs)
 
+> [!WARNING]
+> 🦊 **Notice: リポジトリ移転のお知らせ (Migrated to GitLab)**
+> 
+> 開発拠点をGitLabへ完全移行しました。
+> 最新のソースコードや自動化パイプラインは以下のGitLabリポジトリで公開しています！
+> 
+> 👉 https://gitlab.com/miki-mini/my-ai-zoo
+> 
 > [!NOTE]
 > ✨ <a href="https://usagi-oekaki-service-1032484155743.asia-northeast1.run.app" target="_blank"><strong>Live Demo Portal / **デモサイトはこちら** </strong></a> ✨
 > <br>
